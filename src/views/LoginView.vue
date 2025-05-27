@@ -72,6 +72,12 @@ const handleLogin = async () => {
         return
     }
 
+    // 防止重复提交
+    if (loading.value) {
+        console.log('正在处理中，忽略重复提交')
+        return
+    }
+
     loading.value = true
     try {
         console.log('开始登录请求')
@@ -119,6 +125,10 @@ const goToRegister = () => {
     router.push('/register')
 }
 
+const goToForgotPassword = () => {
+    router.push('/forgot-password')
+}
+
 // 页面加载时恢复记住的登录信息
 onMounted(() => {
     loadRememberedCredentials()
@@ -155,11 +165,16 @@ onMounted(() => {
                         <div class="remember-section">
                             <v-checkbox v-model="rememberPassword" label="记住密码" color="primary" density="compact"
                                 hide-details></v-checkbox>
+
+                            <v-btn color="primary" variant="text" size="small" class="forgot-password-link"
+                                @click="goToForgotPassword">
+                                忘记密码？
+                            </v-btn>
                         </div>
 
-                        <!-- 登录按钮 -->
-                        <v-btn :disabled="!formValid" :loading="loading" color="primary" variant="elevated"
-                            size="x-large" rounded="xl" block class="login-btn" type="submit" @click="handleLogin">
+                        <!-- 登录按钮 - 移除@click事件，只保留type="submit" -->
+                        <v-btn :disabled="!formValid || loading" :loading="loading" color="primary" variant="elevated"
+                            size="x-large" rounded="xl" block class="login-btn" type="submit">
                             <v-icon start>mdi-login</v-icon>
                             立即登录
                         </v-btn>
@@ -252,6 +267,16 @@ onMounted(() => {
 .remember-section {
     margin-top: -8px;
     margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.forgot-password-link {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    min-height: auto !important;
+    padding: 4px 8px !important;
 }
 
 .login-btn {

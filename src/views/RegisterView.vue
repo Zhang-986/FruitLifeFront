@@ -120,6 +120,12 @@ const handleRegister = async () => {
         return
     }
 
+    // 防止重复提交
+    if (loading.value) {
+        console.log('正在处理中，忽略重复提交')
+        return
+    }
+
     loading.value = true
     try {
         console.log('开始注册请求')
@@ -175,6 +181,7 @@ const goToLogin = () => {
 
                 <!-- 注册表单 -->
                 <div class="register-form">
+                    <!-- 只使用v-form的submit事件，移除按钮的click事件 -->
                     <v-form v-model="formValid" @submit.prevent="handleRegister">
                         <!-- 邮箱输入 -->
                         <v-text-field v-model="formData.email" label="邮箱地址" prepend-inner-icon="mdi-email"
@@ -210,9 +217,8 @@ const goToLogin = () => {
                         </div>
 
                         <!-- 注册按钮 -->
-                        <v-btn :disabled="!formValid" :loading="loading" color="primary" variant="elevated"
-                            size="x-large" rounded="xl" block class="register-btn" type="submit"
-                            @click="handleRegister">
+                        <v-btn :disabled="!formValid || loading" :loading="loading" color="primary" variant="elevated"
+                            size="x-large" rounded="xl" block class="register-btn" type="submit">
                             <v-icon start>mdi-account-plus</v-icon>
                             立即注册
                         </v-btn>
