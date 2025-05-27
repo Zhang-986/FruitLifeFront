@@ -5,24 +5,27 @@ export interface ApiResponse<T = any> {
   data: T
 }
 
-// 用户相关接口类型
+// 用户相关接口类型 - 简化为只包含必要字段
 export interface RegisterRequest {
   email: string
   password: string
-  verificationCode: string
+  code: string
 }
 
-export interface LoginRequest {
-  email: string
-  password: string
-}
-
-export interface UserInfo {
-  id: number
-  email: string
+// 后端GuestSessionsDTO对应的类型
+export interface GuestSessionsDTO {
+  id?: string
   nickname?: string
-  avatar?: string
-  createTime?: string
+  code?: string
+  password?: string
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN'
+  heightCm?: number
+  weightKg?: number
+  age?: number
+  email?: string
+  bmiValue?: number
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 // 验证码相关

@@ -5,7 +5,7 @@ import { sendVerificationCode, register } from '@/api/auth'
 
 const router = useRouter()
 
-// 表单数据
+// 表单数据 - 移除昵称字段
 const formData = ref({
     email: '',
     password: '',
@@ -41,9 +41,10 @@ const confirmPasswordRules = [
     (v: string) => v === formData.value.password || '两次密码输入不一致'
 ]
 
+// 验证码规则更新
 const codeRules = [
     (v: string) => !!v || '验证码不能为空',
-    (v: string) => /^\d{6}$/.test(v) || '验证码必须是6位数字'
+    (v: string) => /^\d{4}$/.test(v) || '验证码必须是4位数字'
 ]
 
 // 计算属性
@@ -112,22 +113,29 @@ const handleSendCode = async () => {
 
 // 提交注册
 const handleRegister = async () => {
-    if (!formValid.value) return
+    console.log('注册按钮被点击')
+
+    if (!formValid.value) {
+        console.log('表单验证失败')
+        return
+    }
 
     loading.value = true
     try {
-        // 调用注册接口
+        console.log('开始注册请求')
         const response = await register({
             email: formData.value.email,
             password: formData.value.password,
-            verificationCode: formData.value.verificationCode
+            code: formData.value.verificationCode
         })
 
+        console.log('注册响应:', response)
+
         if (response.code === 200) {
-            showMessage('注册成功！正在跳转...', 'success')
+            showMessage('注册成功！正在跳转到登录页...', 'success')
             setTimeout(() => {
                 router.push('/login')
-            }, 1500)
+            }, 1000)
         } else {
             showMessage(response.msg || '注册失败', 'error')
         }
@@ -171,14 +179,14 @@ const goToLogin = () => {
                         <!-- 邮箱输入 -->
                         <v-text-field v-model="formData.email" label="邮箱地址" prepend-inner-icon="mdi-email"
                             :rules="emailRules" variant="outlined" class="form-field" rounded="lg" clearable
-                            density="comfortable"></v-text-field>
+                            density="comfortable" autocomplete="email" name="email" type="email"></v-text-field>
 
                         <!-- 密码输入 -->
                         <v-text-field v-model="formData.password" label="密码" prepend-inner-icon="mdi-lock"
                             :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                             :type="showPassword ? 'text' : 'password'" :rules="passwordRules" variant="outlined"
-                            class="form-field" rounded="lg" density="comfortable"
-                            @click:append-inner="showPassword = !showPassword"></v-text-field>
+                            class="form-field" rounded="lg" density="comfortable" autocomplete="new-password"
+                            name="password" @click:append-inner="showPassword = !showPassword"></v-text-field>
 
                         <!-- 确认密码 -->
                         <v-text-field v-model="formData.confirmPassword" label="确认密码"
@@ -186,13 +194,14 @@ const goToLogin = () => {
                             :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
                             :type="showConfirmPassword ? 'text' : 'password'" :rules="confirmPasswordRules"
                             variant="outlined" class="form-field" rounded="lg" density="comfortable"
+                            autocomplete="new-password" name="confirmPassword"
                             @click:append-inner="showConfirmPassword = !showConfirmPassword"></v-text-field>
 
                         <!-- 验证码输入 -->
                         <div class="verification-row">
-                            <v-text-field v-model="formData.verificationCode" label="验证码"
+                            <v-text-field v-model="formData.verificationCode" label="4位验证码"
                                 prepend-inner-icon="mdi-shield-check" :rules="codeRules" variant="outlined"
-                                class="verification-input" rounded="lg" maxlength="6"
+                                class="verification-input" rounded="lg" maxlength="4"
                                 density="comfortable"></v-text-field>
                             <v-btn :disabled="!canSendCode" :loading="codeLoading" color="primary" variant="outlined"
                                 class="verification-btn" rounded="lg" @click="handleSendCode">
@@ -202,7 +211,8 @@ const goToLogin = () => {
 
                         <!-- 注册按钮 -->
                         <v-btn :disabled="!formValid" :loading="loading" color="primary" variant="elevated"
-                            size="x-large" rounded="xl" block class="register-btn" type="submit">
+                            size="x-large" rounded="xl" block class="register-btn" type="submit"
+                            @click="handleRegister">
                             <v-icon start>mdi-account-plus</v-icon>
                             立即注册
                         </v-btn>

@@ -24,10 +24,11 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 可以在这里添加 token
+    // 从localStorage获取token并添加到请求头
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('请求携带token:', token.substring(0, 20) + '...')
     }
     
     // 确保GET请求不发送Content-Type
@@ -101,16 +102,25 @@ export const sendVerificationCode = async (email: string): Promise<ApiResponse<s
   }
 }
 
-// 注册接口（后续使用）
+// 注册接口 - 简化为只发送email、code、password
 export const register = async (data: {
   email: string
   password: string
-  verificationCode: string
+  code: string
 }): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.post<ApiResponse<any>>('/user/register', data)
+    // 只发送三个必要字段
+    const requestData = {
+      email: data.email,
+      password: data.password,
+      code: data.code
+    }
+    
+    console.log('准备发送注册请求:', requestData)
+    const response = await api.post<ApiResponse<any>>('/user/register', requestData)
     
     const result = response.data
+    console.log('注册请求响应:', result)
     
     // 检查业务状态码
     if (result.code === 200) {
@@ -123,31 +133,54 @@ export const register = async (data: {
       throw error
     }
   } catch (error) {
+    console.error('注册请求失败:', error)
     throw error
   }
 }
 
-// 登录接口（后续使用）
+// 登录接口 - 按后端DTO要求发送email和password
 export const login = async (data: {
   email: string
   password: string
-}): Promise<ApiResponse<any>> => {
+}): Promise<ApiResponse<string>> => {
   try {
-    const response = await api.post<ApiResponse<any>>('/user/login', data)
+    // 构造请求数据
+    const requestData = {
+      email: data.email,
+      password: data.password
+    }
+    
+    console.log('准备发送登录请求到:', '/user/login')
+    console.log('请求数据:', requestData)
+    console.log('完整URL:', import.meta.env.DEV ? '/api/user/login' : 'http://localhost:8080/user/login')
+    
+    const response = await api.post<ApiResponse<string>>('/user/login', requestData)
     
     const result = response.data
+    console.log('登录请求响应:', result)
     
     // 检查业务状态码
     if (result.code === 200) {
+      console.log('登录成功，token:', result.data)
       return result
     } else {
-      // 业务失败
-      const error = new Error(result.msg || '请求失败')
+      console.log('登录失败，错误信息:', result.msg)
+      const error = new Error(result.msg || '登录失败')
       error.name = 'BusinessError'
       ;(error as any).code = result.code
       throw error
     }
-  } catch (error) {
+  } catch (error: any) {
+    console.error('登录请求异常:', error)
+    
+    // 如果是网络错误，提供更具体的错误信息
+    if (error.code === 'ERR_NETWORK') {
+      console.error('网络连接失败，请检查：')
+      console.error('1. 后端服务是否在 http://localhost:8080 运行')
+      console.error('2. 接口路径是否为 /user/login')
+      console.error('3. CORS配置是否正确')
+    }
+    
     throw error
   }
 }
