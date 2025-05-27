@@ -1,0 +1,184 @@
+@use 'vuetify/settings' with (
+  $utilities: false,
+  $color-pack: false
+);
+
+// 自定义CSS变量
+:root {
+  --fruit-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  --fruit-gradient: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+  --fruit-gradient-orange: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+  --fruit-gradient-pink: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+}
+
+// 全局样式 - 增大基础字体
+html {
+  font-size: 16px !important;
+}
+
+body {
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+}
+
+// Vuetify 组件字体大小调整
+.v-application {
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+
+.v-btn {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  min-height: 48px !important;
+  padding: 0 24px !important;
+  border-radius: 16px !important;
+  text-transform: none !important;
+}
+
+.v-card {
+  border-radius: 20px !important;
+  font-size: 16px !important;
+}
+
+.v-card-title {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+
+.v-card-subtitle {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+.v-card-text {
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+
+.v-list-item {
+  min-height: 52px !important;
+  font-size: 16px !important;
+}
+
+.v-list-item-title {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+.v-list-item-subtitle {
+  font-size: 14px !important;
+}
+
+.v-app-bar-title {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+}
+
+.v-navigation-drawer {
+  font-size: 16px !important;
+}
+
+.v-text-field input {
+  font-size: 16px !important;
+}
+
+.v-sheet {
+  border-radius: 16px !important;
+}
+
+.v-chip {
+  border-radius: 24px !important;
+}
+
+// 标题字体大小调整
+.text-h1 { font-size: 3.5rem !important; }
+.text-h2 { font-size: 2.75rem !important; }
+.text-h3 { font-size: 2.25rem !important; }
+.text-h4 { font-size: 1.875rem !important; }
+.text-h5 { font-size: 1.5rem !important; }
+.text-h6 { font-size: 1.25rem !important; }
+
+// 自定义动画
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+
+// 水果主题渐变背景类
+.fruit-gradient {
+  background: var(--fruit-gradient);
+}
+
+.fruit-gradient-orange {
+  background: var(--fruit-gradient-orange);
+}
+
+.fruit-gradient-pink {
+  background: var(--fruit-gradient-pink);
+}
+
+// 自定义卡片阴影 - 增大阴影
+.fruit-card {
+  box-shadow: var(--fruit-shadow) !important;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
+// 间距调整
+.pa-4 { padding: 20px !important; }
+.pa-6 { padding: 32px !important; }
+.pa-8 { padding: 48px !important; }
+.pa-10 { padding: 48px !important; }
+.ma-4 { margin: 20px !important; }
+.ma-6 { margin: 32px !important; }
+.ma-8 { margin: 48px !important; }
+
+// 底部导航调整
+.v-bottom-navigation {
+  height: 72px !important;
+  
+  .v-btn {
+    font-size: 14px !important;
+    min-height: 64px !important;
+  }
+}
+
+// 应用栏高度调整
+.v-app-bar {
+  height: 72px !important;
+}
+
+// 图标大小调整
+.v-icon {
+  &.size-48 {
+    font-size: 60px !important;
+  }
+  &.size-64 {
+    font-size: 80px !important;
+  }
+}
