@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
+import { requestInterceptor } from '@/utils/request-interceptor'
 
 // 后端返回结果类型定义
 interface ApiResponse<T = any> {
@@ -23,7 +24,10 @@ const api = axios.create({
 
 // 请求拦截器
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
+    // 使用IP拦截器处理客户端IP
+    config = await requestInterceptor.interceptRequest(config)
+    
     // 从localStorage获取token并添加到请求头
     const token = localStorage.getItem('token')
     if (token) {

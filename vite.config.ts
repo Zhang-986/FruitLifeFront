@@ -13,10 +13,8 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     vuetify({
-      autoImport: true,
-      styles: {
-        configFile: 'src/styles/settings.scss'
-      }
+      autoImport: true
+      // 移除可能冲突的styles配置
     }),
     AutoImport({
       imports: ['vue', 'vue-router'],
@@ -31,11 +29,34 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  // 添加开发服务器代理配置
+  // 优化构建配置
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'pinia'],
+          vuetify: ['vuetify'],
+          utils: ['axios']
+        }
+      }
+    },
+    // 增加chunk大小警告阈值
+    chunkSizeWarningLimit: 1000
+  },
+  // 优化开发服务器配置
   server: {
-    open: true, // 启动时自动打开浏览器
-    host: '0.0.0.0', // 允许外部访问
-    port: 5173, // 明确指定端口
+    open: true,
+    host: '0.0.0.0',
+    port: 5173,
+    // 提高稳定性
+    hmr: {
+      overlay: true
+    },
+    // 增加文件监听的稳定性
+    watch: {
+      usePolling: true,
+      interval: 1000
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
@@ -54,5 +75,10 @@ export default defineConfig({
         },
       }
     }
+  },
+  // 优化依赖预构建
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', 'vuetify', 'axios'],
+    exclude: ['vue-demi']
   }
 })

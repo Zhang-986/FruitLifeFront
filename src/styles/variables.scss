@@ -1,0 +1,100 @@
+// SCSS变量定义（必须在使用前定义）
+$fruit-green: #4CAF50 !default;
+$fruit-light-green: #8BC34A !default;
+$fruit-orange: #FF9800 !default;
+$fruit-pink: #E91E63 !default;
+$fruit-yellow: #FFC107 !default;
+
+// 灰度色彩
+$gray-50: #FAFAFA !default;
+$gray-100: #F5F5F5 !default;
+$gray-200: #EEEEEE !default;
+$gray-300: #E0E0E0 !default;
+$gray-400: #BDBDBD !default;
+$gray-500: #9E9E9E !default;
+$gray-600: #757575 !default;
+$gray-700: #616161 !default;
+$gray-800: #424242 !default;
+$gray-900: #212121 !default;
+
+// 断点
+$breakpoint-xs: 0 !default;
+$breakpoint-sm: 600px !default;
+$breakpoint-md: 960px !default;
+$breakpoint-lg: 1264px !default;
+$breakpoint-xl: 1904px !default;
+
+// Z-index层级
+$z-dropdown: 1000 !default;
+$z-sticky: 1020 !default;
+$z-fixed: 1030 !default;
+$z-modal-backdrop: 1040 !default;
+$z-modal: 1050 !default;
+$z-popover: 1060 !default;
+$z-tooltip: 1070 !default;
+
+// 间距
+$spacing-xs: 4px !default;
+$spacing-sm: 8px !default;
+$spacing-md: 16px !default;
+$spacing-lg: 24px !default;
+$spacing-xl: 32px !default;
+$spacing-2xl: 48px !default;
+$spacing-3xl: 64px !default;
+
+// 圆角
+$radius-sm: 4px !default;
+$radius-md: 8px !default;
+$radius-lg: 12px !default;
+$radius-xl: 16px !default;
+$radius-2xl: 24px !default;
+
+// CSS自定义属性（在Sass变量定义后）
+:root {
+  // 水果主题色彩
+  --fruit-green: #{$fruit-green};
+  --fruit-light-green: #{$fruit-light-green};
+  --fruit-orange: #{$fruit-orange};
+  --fruit-pink: #{$fruit-pink};
+  --fruit-yellow: #{$fruit-yellow};
+  
+  // 灰度色彩
+  --gray-50: #{$gray-50};
+  --gray-100: #{$gray-100};
+  --gray-200: #{$gray-200};
+  --gray-300: #{$gray-300};
+  --gray-400: #{$gray-400};
+  --gray-500: #{$gray-500};
+  --gray-600: #{$gray-600};
+  --gray-700: #{$gray-700};
+  --gray-800: #{$gray-800};
+  --gray-900: #{$gray-900};
+  
+  // 语义化颜色
+  --success: var(--fruit-green);
+  --warning: var(--fruit-yellow);
+  --error: #F44336;
+  --info: #2196F3;
+  
+  // 阴影
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  // 圆角
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-xl: #{$radius-xl};
+  --radius-2xl: #{$radius-2xl};
+  
+  // 间距
+  --spacing-xs: #{$spacing-xs};
+  --spacing-sm: #{$spacing-sm};
+  --spacing-md: #{$spacing-md};
+  --spacing-lg: #{$spacing-lg};
+  --spacing-xl: #{$spacing-xl};
+  --spacing-2xl: #{$spacing-2xl};
+  --spacing-3xl: #{$spacing-3xl};
+}

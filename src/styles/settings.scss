@@ -1,3 +1,8 @@
+// 导入项目变量
+@use './variables' as vars;
+
+// 简化的Vuetify SASS变量自定义
+@use 'sass:map';
 @use 'vuetify/settings' with (
   $utilities: false,
   $color-pack: false

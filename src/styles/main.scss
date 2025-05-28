@@ -1,0 +1,165 @@
+// 导入Vuetify样式
+@use 'vuetify/styles';
+
+// 导入项目变量和混合器（使用现代语法）
+@use './variables' as vars;
+@use './mixins' as mix;
+
+// 全局样式重置
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #ffffff;
+  color: #212121;
+}
+
+// 水果主题相关样式
+.fruit-gradient {
+  @include mix.fruit-gradient();
+}
+
+.fruit-card {
+  @include mix.fruit-card();
+}
+
+// 动画样式
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+// 工具类
+.text-gradient {
+  @include mix.text-gradient();
+}
+
+.glass-effect {
+  @include mix.glass-effect();
+}
+
+// 响应式辅助类
+.mobile-only {
+  @include mix.mobile {
+    display: block !important;
+  }
+  @include mix.desktop {
+    display: none !important;
+  }
+}
+
+.desktop-only {
+  @include mix.mobile {
+    display: none !important;
+  }
+  @include mix.desktop {
+    display: block !important;
+  }
+}
+
+// 全局按钮样式优化
+.v-btn {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+// 全局卡片样式
+.v-card {
+  border-radius: 12px !important;
+}
+
+// 输入框焦点样式
+.v-field--focused {
+  .v-field__outline {
+    --v-field-border-width: 2px;
+  }
+}
+
+// 导航栏样式修复
+.v-app-bar {
+  // 确保导航栏使用正确的主题色
+  &.v-app-bar--primary {
+    background-color: rgb(var(--v-theme-primary)) !important;
+    color: rgb(var(--v-theme-on-primary)) !important;
+    
+    .v-btn, .v-icon, .v-toolbar__content {
+      color: rgb(var(--v-theme-on-primary)) !important;
+    }
+  }
+  
+  // 导航栏标题颜色
+  .v-toolbar-title {
+    color: rgb(var(--v-theme-on-primary)) !important;
+  }
+  
+  // 导航栏按钮颜色
+  .v-btn {
+    color: rgb(var(--v-theme-on-primary)) !important;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+  
+  // 导航栏图标颜色
+  .v-icon {
+    color: rgb(var(--v-theme-on-primary)) !important;
+  }
+}
+
+// 导航栏样式强化
+.v-app-bar {
+  // 确保主题色正确应用
+  &[data-v-theme="light"] {
+    background-color: #4CAF50 !important;
+  }
+  
+  // 强制所有文字和图标为白色
+  .v-toolbar-title,
+  .v-btn,
+  .v-icon {
+    color: white !important;
+  }
+  
+  // 链接样式
+  a {
+    color: white !important;
+    text-decoration: none !important;
+  }
+  
+  // 按钮悬停效果
+  .v-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+// 确保导航链接颜色正确
+.v-navigation-drawer {
+  .v-list-item {
+    color: rgb(var(--v-theme-on-surface)) !important;
+    
+    &.v-list-item--active {
+      background-color: rgba(var(--v-theme-primary), 0.1) !important;
+      color: rgb(var(--v-theme-primary)) !important;
+    }
+  }
+}

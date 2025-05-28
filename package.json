@@ -1,16 +1,28 @@
 {
-  "name": "fruitlifefront",
-  "version": "0.0.0",
+  "name": "fruit-life-frontend",
+  "version": "1.0.0",
+  "description": "果润生活 - 现代化水果商城前端应用",
   "private": true,
   "type": "module",
+  "keywords": [
+    "vue",
+    "vuetify",
+    "水果",
+    "商城",
+    "果润生活"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build",
-    "lint": "eslint . --fix",
-    "format": "prettier --write src/"
+    "type-check": "vue-tsc --build --force",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/",
+    "dev:network": "vite --host 0.0.0.0 --port 5173",
+    "dev:info": "node -e \"const os=require('os'); const interfaces=os.networkInterfaces(); Object.keys(interfaces).forEach(name => interfaces[name].forEach(iface => { if(iface.family==='IPv4' && !iface.internal) console.log('🌐 访问地址: http://' + iface.address + ':5173') }))\" && npm run dev",
+    "clean": "rm -rf dist node_modules/.vite",
+    "reinstall": "rm -rf node_modules package-lock.json && npm install"
   },
   "dependencies": {
     "axios": "^1.7.7",

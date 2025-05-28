@@ -1,11 +1,11 @@
-# 🍎 水果生活 FruitLife Frontend
+# 🍎 果润生活 FruitLife Frontend
 
 一个基于 Vue 3 + Vuetify 的现代化水果商城前端项目，采用清新的Google Material Design风格。
 
 ## ✨ 特性
 
 - 🎨 清新的水果主题设计
-- 📱 响应式设计，支持移动端
+- 📱
 - 🌙 明暗主题切换
 - 🔍 实时搜索功能
 - 🛒 购物车功能

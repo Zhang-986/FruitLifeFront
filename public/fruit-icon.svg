@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="45" fill="#4CAF50"/>
+  <circle cx="50" cy="50" r="35" fill="#8BC34A"/>
+  <path d="M50 15 Q40 25 50 35 Q60 25 50 15" fill="#2E7D32"/>
+  <text x="50" y="60" text-anchor="middle" font-size="30" fill="white">🍎</text>
+</svg>
