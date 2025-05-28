@@ -23,7 +23,35 @@
       </div>
 
       <!-- 用户菜单 -->
-      <v-menu>
+      <v-menu v-if="isLoggedIn">
+        <template v-slot:activator="{ props }">
+          <v-btn icon v-bind="props" color="white">
+            <v-icon>mdi-account-circle</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item>
+            <v-list-item-title class="font-weight-bold">{{ displayName }}</v-list-item-title>
+            <v-list-item-subtitle>已登录</v-list-item-subtitle>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item to="/user">
+            <template v-slot:prepend>
+              <v-icon>mdi-view-dashboard</v-icon>
+            </template>
+            <v-list-item-title>用户中心</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="handleLogout">
+            <template v-slot:prepend>
+              <v-icon>mdi-logout</v-icon>
+            </template>
+            <v-list-item-title>退出登录</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
+      <!-- 未登录时的菜单 -->
+      <v-menu v-else>
         <template v-slot:activator="{ props }">
           <v-btn icon v-bind="props" color="white">
             <v-icon>mdi-account-circle</v-icon>
@@ -66,16 +94,52 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
+const router = useRouter()
 const drawer = ref(false)
+const authStore = useAuthStore()
 
-const menuItems = [
-  { title: '首页', icon: 'mdi-home', to: '/' },
-  { title: '关于我们', icon: 'mdi-information', to: '/about' },
-  { title: '登录', icon: 'mdi-login', to: '/login' },
-  { title: '注册', icon: 'mdi-account-plus', to: '/register' }
-]
+// 使用响应式的认证状态
+const isLoggedIn = computed(() => authStore.isLoggedIn)
+const displayName = computed(() => authStore.displayName)
+
+// 导航菜单项
+const menuItems = computed(() => {
+  const baseItems = [
+    { title: '首页', icon: 'mdi-home', to: '/' },
+    { title: '关于我们', icon: 'mdi-information', to: '/about' }
+  ]
+
+  if (isLoggedIn.value) {
+    baseItems.push({ title: '用户中心', icon: 'mdi-account-circle', to: '/user' })
+  } else {
+    baseItems.push(
+      { title: '登录', icon: 'mdi-login', to: '/login' },
+      { title: '注册', icon: 'mdi-account-plus', to: '/register' }
+    )
+  }
+
+  return baseItems
+})
+
+// 退出登录
+const handleLogout = () => {
+  console.log('🚪 用户点击退出登录')
+  authStore.logout()
+  console.log('✅ 退出登录完成，跳转到首页')
+  router.push('/')
+}
+
+// 页面加载时检查登录状态
+onMounted(() => {
+  // 如果当前在需要登录的页面但未登录，跳转到登录页
+  if (router.currentRoute.value.meta.requiresAuth && !isLoggedIn.value) {
+    router.push('/login')
+  }
+})
 </script>
 
 <style scoped>

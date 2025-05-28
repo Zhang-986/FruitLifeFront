@@ -5,6 +5,8 @@ import router from './router'
 import App from './App.vue'
 import './styles/main.scss'
 import { requestInterceptor } from '@/utils/request-interceptor'
+import { AuthManager } from '@/utils/auth-manager'
+import { useAuthStore } from '@/stores/auth'
 
 const app = createApp(App)
 
@@ -31,14 +33,23 @@ window.addEventListener('unhandledrejection', event => {
   }
 })
 
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
 app.use(vuetify)
+
+// 初始化认证状态
+const authStore = useAuthStore()
+authStore.initializeAuth()
 
 // 初始化请求拦截器
 if (import.meta.env.DEV) {
   requestInterceptor.initialize().then(() => {
     console.log('🎯 应用已启动，IP拦截器已就绪')
+    
+    // 显示当前登录状态
+    console.log('🔍 应用启动时的登录状态检查:')
+    authStore.debugStorage()
   })
 }
 

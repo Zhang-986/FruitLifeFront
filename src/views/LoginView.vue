@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/api/auth'
-import { AuthManager } from '@/utils/auth'
+import { AuthManager } from '@/utils/auth-manager'
 
 const router = useRouter()
 
@@ -72,7 +72,6 @@ const handleLogin = async () => {
         return
     }
 
-    // 防止重复提交
     if (loading.value) {
         console.log('正在处理中，忽略重复提交')
         return
@@ -93,14 +92,28 @@ const handleLogin = async () => {
             handleRememberPassword()
 
             // 使用AuthManager保存token
+            console.log('🔐 保存token和用户信息...')
             AuthManager.saveToken(response.data, formData.value.email)
 
-            showMessage('登录成功！正在跳转...', 'success')
+            // 调试存储状态
+            AuthManager.debugStorage()
 
-            // 延时跳转，确保用户看到成功消息
+            showMessage('登录成功！正在跳转到用户中心...', 'success')
+
+            // 短暂延迟后跳转，确保token已保存
             setTimeout(() => {
-                router.push('/')
-            }, 1000)
+                console.log('🚀 准备跳转到用户中心')
+                console.log('🔍 跳转前最后检查登录状态:', AuthManager.isLoggedIn())
+
+                // 直接使用router.replace而不是push，避免可以后退到登录页
+                router.replace('/user').then(() => {
+                    console.log('✅ 跳转成功')
+                }).catch((error) => {
+                    console.error('❌ 跳转失败:', error)
+                    // 如果跳转失败，直接刷新页面
+                    window.location.href = '/user'
+                })
+            }, 500)
         } else {
             showMessage(response.msg || '登录失败', 'error')
         }
@@ -132,6 +145,14 @@ const goToForgotPassword = () => {
 // 页面加载时恢复记住的登录信息
 onMounted(() => {
     loadRememberedCredentials()
+
+    console.log('🔍 LoginView加载，检查登录状态')
+    AuthManager.debugStorage()
+
+    if (AuthManager.isLoggedIn()) {
+        console.log('✅ 已登录，重定向到用户中心')
+        router.replace('/user')
+    }
 })
 </script>
 
