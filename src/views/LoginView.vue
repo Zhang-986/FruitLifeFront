@@ -3,9 +3,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/api/auth'
 import { AuthManager } from '@/utils/auth-manager'
+import { useWebSocketStore } from '@/stores/websocket'
 import AppNavigation from '@/components/AppNavigation.vue'
 
 const router = useRouter()
+const webSocketStore = useWebSocketStore()
 
 const formData = ref({
     email: '',
@@ -92,29 +94,23 @@ const handleLogin = async () => {
             // 处理记住密码
             handleRememberPassword()
 
-            // 使用AuthManager保存JWT token - response.data就是JWT令牌
-            console.log('🔐 保存JWT token和用户信息...')
+            // 使用AuthManager保存JWT token
             AuthManager.saveToken(response.data, formData.value.email)
 
-            // 调试存储状态
-            AuthManager.debugStorage()
+            showMessage('登录成功！正在连接服务...', 'success')
 
-            showMessage('登录成功！正在跳转到用户中心...', 'success')
+            // 登录成功后初始化WebSocket
+            try {
+                console.log('🚀 登录成功，开始初始化WebSocket')
+                await webSocketStore.initialize()
+            } catch (error) {
+                console.error('❌ WebSocket初始化失败:', error)
+            }
 
-            // 短暂延迟后跳转，确保token已保存
+            // 短暂延迟后跳转
             setTimeout(() => {
-                console.log('🚀 准备跳转到用户中心')
-                console.log('🔍 跳转前最后检查登录状态:', AuthManager.isLoggedIn())
-
-                // 直接使用router.replace而不是push，避免可以后退到登录页
-                router.replace('/user').then(() => {
-                    console.log('✅ 跳转成功')
-                }).catch((error) => {
-                    console.error('❌ 跳转失败:', error)
-                    // 如果跳转失败，直接刷新页面
-                    window.location.href = '/user'
-                })
-            }, 500)
+                router.replace('/user')
+            }, 1500)
         } else {
             showMessage(response.msg || '登录失败', 'error')
         }

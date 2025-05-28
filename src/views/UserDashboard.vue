@@ -49,10 +49,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { AuthManager } from '@/utils/auth-manager'
 import { useAuthStore } from '@/stores/auth'
+import { useWebSocketStore } from '@/stores/websocket'
 import AppNavigation from '@/components/AppNavigation.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const webSocketStore = useWebSocketStore()
 
 // 计算用户显示名称
 const displayName = computed(() => {
@@ -111,14 +113,24 @@ const navigateToFeature = (route: string) => {
 }
 
 // 退出登录
-const handleLogout = () => {
+const handleLogout = async () => {
     console.log('🚪 用户点击退出登录')
 
-    // 清除认证信息
-    AuthManager.logout()
+    try {
+        // 使用WebSocket store的异步退出方法
+        await webSocketStore.handleLogout()
 
-    // 跳转到登录页
-    router.replace('/login')
+        console.log('🔍 退出后登录状态检查:', authStore.isLoggedIn)
+
+        // 跳转到登录页
+        await router.replace('/login')
+    } catch (error) {
+        console.error('退出登录失败:', error)
+
+        // 即使失败也强制清除状态并跳转
+        await authStore.logout()
+        await router.replace('/login')
+    }
 }
 
 // 页面加载时检查登录状态

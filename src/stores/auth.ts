@@ -60,12 +60,22 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   // 退出登录
-  const logout = () => {
+  const logout = async () => {
+    console.log('🚪 AuthStore开始退出登录')
+    
+    // 立即清除store状态
     token.value = null
     userInfo.value = null
+    
+    // 同时清除localStorage
     localStorage.removeItem('fruit_life_token')
     localStorage.removeItem('fruit_life_user')
-    console.log('🚪 用户已退出登录，状态已清除')
+    localStorage.removeItem('rememberPassword')
+    localStorage.removeItem('savedEmail')
+    localStorage.removeItem('savedPassword')
+    
+    console.log('✅ AuthStore退出登录完成，状态已清除')
+    console.log('🔍 退出后登录状态:', isLoggedIn.value)
   }
   
   // 获取token
@@ -110,7 +120,7 @@ export const useAuthStore = defineStore('auth', () => {
     // 方法
     initializeAuth,
     saveToken,
-    logout,
+    logout, // 现在是异步方法
     getToken,
     getUserInfo,
     isTokenExpiringSoon,

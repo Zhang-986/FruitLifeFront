@@ -10,5 +10,6 @@ declare module 'vue' {
     AppNavigation: typeof import('./src/components/AppNavigation.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    UserInfoNotification: typeof import('./src/components/UserInfoNotification.vue')['default']
   }
 }

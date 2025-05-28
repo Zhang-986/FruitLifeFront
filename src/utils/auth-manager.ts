@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
  */
 export class AuthManager {
   private static readonly TOKEN_KEY = 'fruit_life_token'
-  private static readonly USER_INFO_KEY = 'fruit_life_user'
+  private static readonly USER_KEY = 'fruit_life_user'
   
   /**
    * 获取store实例
@@ -48,11 +48,42 @@ export class AuthManager {
   }
   
   /**
-   * 清除用户数据（退出登录）
+   * 异步退出登录
    */
-  static logout() {
-    const store = this.getStore()
-    store.logout()
+  static async logout(): Promise<void> {
+    console.log('🚪 AuthManager开始退出登录流程')
+    
+    try {
+      // 清除所有存储的认证信息
+      localStorage.removeItem(this.TOKEN_KEY)
+      localStorage.removeItem(this.USER_KEY)
+      
+      // 清除记住密码信息（可选）
+      localStorage.removeItem('rememberPassword')
+      localStorage.removeItem('savedEmail')
+      localStorage.removeItem('savedPassword')
+      
+      console.log('✅ AuthManager退出登录完成，所有数据已清除')
+      
+      // 确保数据清除完成，添加微小延迟
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+    } catch (error) {
+      console.error('❌ AuthManager退出登录过程中发生错误:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 同步退出登录（向后兼容）
+   */
+  static logoutSync(): void {
+    localStorage.removeItem(this.TOKEN_KEY)
+    localStorage.removeItem(this.USER_KEY)
+    localStorage.removeItem('rememberPassword')
+    localStorage.removeItem('savedEmail')
+    localStorage.removeItem('savedPassword')
+    console.log('🚪 同步退出登录完成')
   }
   
   /**

@@ -4,11 +4,15 @@
     <v-main class="app-main">
       <router-view />
     </v-main>
+
+    <!-- 全局用户信息通知组件 -->
+    <UserInfoNotification />
   </v-app>
 </template>
 
 <script setup lang="ts">
-// 移除所有导航相关的代码，现在由各个页面自己决定是否显示导航栏
+// 移除自动初始化WebSocket的逻辑，只在登录成功后才启动
+import UserInfoNotification from '@/components/UserInfoNotification.vue'
 </script>
 
 <style scoped>

@@ -249,10 +249,24 @@ const navigateToRegister = () => {
     router.push('/register')
 }
 
-const handleLogout = () => {
-    authStore.logout()
-    closeDrawer()
-    router.push('/')
+const handleLogout = async () => {
+    console.log('🚪 导航栏退出登录')
+
+    try {
+        // 使用auth store的退出方法
+        await authStore.logout()
+
+        closeDrawer()
+
+        // 跳转到首页
+        await router.push('/')
+    } catch (error) {
+        console.error('导航栏退出登录失败:', error)
+
+        // 即使失败也关闭抽屉并跳转
+        closeDrawer()
+        await router.push('/')
+    }
 }
 
 const handleUserAction = () => {
