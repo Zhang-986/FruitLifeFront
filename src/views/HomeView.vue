@@ -1,346 +1,200 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AppNavigation from '@/components/AppNavigation.vue'
 
-const featuredFruits = ref([
+const router = useRouter()
+
+// 轮播图数据
+const carouselSlides = ref([
+    {
+        title: '新鲜水果 每日送达',
+        subtitle: '精选优质水果，新鲜直达您的餐桌',
+        buttonText: '立即选购',
+        image: 'https://picsum.photos/800/300?random=1',
+        action: () => router.push('/products')
+    },
+    {
+        title: '特价促销 限时优惠',
+        subtitle: '多种水果特价销售，错过再等一年',
+        buttonText: '查看促销',
+        image: 'https://picsum.photos/800/300?random=2',
+        action: () => router.push('/promotions')
+    },
+    {
+        title: '会员专享 更多优惠',
+        subtitle: '注册会员享受更多专属优惠',
+        buttonText: '立即注册',
+        image: 'https://picsum.photos/800/300?random=3',
+        action: () => router.push('/register')
+    }
+])
+
+// 热门商品
+const featuredProducts = ref([
     {
         id: 1,
         name: '新鲜苹果',
-        price: 12.99,
-        image: '🍎',
-        description: '甜脆可口，营养丰富',
-        color: 'success'
+        description: '脆甜可口，营养丰富',
+        price: '12.80',
+        image: 'https://picsum.photos/300/200?random=10'
     },
     {
         id: 2,
         name: '香甜橙子',
-        price: 8.99,
-        image: '🍊',
-        description: '维C丰富，酸甜适中',
-        color: 'warning'
+        description: '汁多味甜，维C丰富',
+        price: '15.60',
+        image: 'https://picsum.photos/300/200?random=11'
     },
     {
         id: 3,
-        name: '鲜美草莓',
-        price: 15.99,
-        image: '🍓',
-        description: '酸甜可口，颜值超高',
-        color: 'error'
+        name: '进口香蕉',
+        description: '软糯香甜，老少皆宜',
+        price: '8.90',
+        image: 'https://picsum.photos/300/200?random=12'
     },
     {
         id: 4,
-        name: '热带芒果',
-        price: 18.99,
-        image: '🥭',
-        description: '香甜浓郁，口感顺滑',
-        color: 'banana'
+        name: '新鲜草莓',
+        description: '酸甜可口，颜值很高',
+        price: '28.80',
+        image: 'https://picsum.photos/300/200?random=13'
     }
 ])
 
-const categories = ref([
-    { name: '新鲜水果', icon: 'mdi-fruit-cherries', color: 'primary' },
-    { name: '有机蔬菜', icon: 'mdi-carrot', color: 'success' },
-    { name: '坚果干果', icon: 'mdi-peanut', color: 'brown' },
-    { name: '进口水果', icon: 'mdi-airplane', color: 'info' }
-])
+// 方法
+const viewProduct = (product: any) => {
+    console.log('查看商品:', product.name)
+    // 这里可以跳转到商品详情页面
+}
+
+const addToCart = (product: any) => {
+    console.log('添加到购物车:', product.name)
+    // 这里可以调用添加购物车的API
+}
 </script>
 
 <template>
-    <div>
-        <!-- 欢迎横幅 -->
-        <v-row class="mb-12">
-            <v-col cols="12">
-                <v-card class="welcome-banner fruit-gradient-orange" elevation="12" rounded="xl">
-                    <div class="welcome-content">
-                        <div class="welcome-icons mb-8">
-                            🍎🍊🍓🥭🍇
-                        </div>
+    <div class="home-page">
+        <!-- 使用统一的导航组件 -->
+        <AppNavigation :show-search-button="true" :show-cart-button="true" />
 
-                        <v-card-title class="welcome-title bounce-in">
-                            欢迎来到水果生活
-                        </v-card-title>
-
-                        <v-card-subtitle class="welcome-subtitle">
-                            新鲜水果，健康生活每一天
-                        </v-card-subtitle>
-
-                        <p class="welcome-description">
-                            精选全球优质水果，严格品质把控，冷链运输保鲜<br>
-                            让每一口都是大自然的美好馈赠
-                        </p>
-
-                        <div class="welcome-actions">
-                            <v-btn color="white" variant="elevated" size="x-large" class="action-btn primary-btn"
-                                rounded="xl">
-                                <v-icon start size="large">mdi-shopping</v-icon>
-                                开始购买
-                            </v-btn>
-
-                            <v-btn color="white" variant="outlined" size="x-large" class="action-btn secondary-btn ml-6"
-                                rounded="xl">
-                                <v-icon start size="large">mdi-information</v-icon>
-                                了解更多
+        <!-- 主要内容区域 -->
+        <div class="home-content">
+            <!-- 轮播图 -->
+            <v-carousel cycle height="300" hide-delimiter-background show-arrows="hover" class="home-carousel">
+                <v-carousel-item v-for="(slide, i) in carouselSlides" :key="i" :src="slide.image" cover>
+                    <div class="carousel-content">
+                        <div class="text-center">
+                            <h2 class="text-h3 font-weight-bold text-white mb-4">
+                                {{ slide.title }}
+                            </h2>
+                            <p class="text-h6 text-white mb-6">
+                                {{ slide.subtitle }}
+                            </p>
+                            <v-btn color="white" variant="elevated" size="large" rounded="xl" @click="slide.action">
+                                {{ slide.buttonText }}
                             </v-btn>
                         </div>
-
-                        <div class="welcome-features">
-                            <div class="feature-item">
-                                <v-icon color="white" size="large">mdi-truck-fast</v-icon>
-                                <span>2小时送达</span>
-                            </div>
-                            <div class="feature-item">
-                                <v-icon color="white" size="large">mdi-leaf</v-icon>
-                                <span>新鲜保证</span>
-                            </div>
-                            <div class="feature-item">
-                                <v-icon color="white" size="large">mdi-certificate</v-icon>
-                                <span>品质认证</span>
-                            </div>
-                        </div>
                     </div>
-                </v-card>
-            </v-col>
-        </v-row>
+                </v-carousel-item>
+            </v-carousel>
 
-        <!-- 分类卡片 -->
-        <v-row class="mb-8">
-            <v-col cols="12">
-                <h2 class="text-h4 font-weight-bold text-center mb-6">🍇 精选分类</h2>
-            </v-col>
-            <v-col v-for="category in categories" :key="category.name" cols="12" sm="6" md="3">
-                <v-card class="fruit-card text-center pa-4" :color="category.color" variant="tonal" hover>
-                    <v-icon size="48" class="mb-3">{{ category.icon }}</v-icon>
-                    <v-card-title class="text-h6">{{ category.name }}</v-card-title>
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <!-- 特色水果展示 -->
-        <v-row>
-            <v-col cols="12">
-                <h2 class="text-h4 font-weight-bold text-center mb-6">🌟 今日特价</h2>
-            </v-col>
-            <v-col v-for="fruit in featuredFruits" :key="fruit.id" cols="12" sm="6" md="3">
-                <v-card class="fruit-card" height="320">
-                    <div class="text-center pa-4">
-                        <div class="text-h1 mb-3">{{ fruit.image }}</div>
-                        <v-card-title class="text-h6 font-weight-bold">
-                            {{ fruit.name }}
-                        </v-card-title>
-                        <v-card-subtitle class="mb-3">
-                            {{ fruit.description }}
-                        </v-card-subtitle>
-                        <div class="text-h5 font-weight-bold mb-4" :class="`text-${fruit.color}`">
-                            ¥{{ fruit.price }}
-                        </div>
-                    </div>
-
-                    <v-card-actions class="pa-4">
-                        <v-btn :color="fruit.color" variant="elevated" block size="large" rounded>
-                            <v-icon start>mdi-cart-plus</v-icon>
-                            加入购物车
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <!-- 促销横幅 -->
-        <v-row class="mt-8">
-            <v-col cols="12">
-                <v-card class="fruit-gradient-pink pa-8 text-center" elevation="8">
-                    <v-card-title class="text-h3 text-white font-weight-bold mb-4">
-                        🎉 限时优惠
-                    </v-card-title>
-                    <v-card-subtitle class="text-h6 text-white opacity-90 mb-4">
-                        全场水果满99元免费配送，新用户首单立减20元！
-                    </v-card-subtitle>
-                    <v-btn color="white" variant="elevated" size="x-large" class="font-weight-bold" rounded>
-                        立即抢购
-                        <v-icon end>mdi-flash</v-icon>
-                    </v-btn>
-                </v-card>
-            </v-col>
-        </v-row>
+            <!-- 商品展示区域 -->
+            <v-container class="py-8">
+                <!-- 热门商品 -->
+                <section class="mb-8">
+                    <h2 class="text-h4 font-weight-bold text-center mb-6">
+                        🔥 热门水果
+                    </h2>
+                    <v-row>
+                        <v-col v-for="product in featuredProducts" :key="product.id" cols="12" sm="6" md="4" lg="3">
+                            <v-card class="product-card" elevation="4" rounded="xl" hover @click="viewProduct(product)">
+                                <v-img :src="product.image" height="200" cover class="product-image">
+                                    <template v-slot:placeholder>
+                                        <v-row class="fill-height ma-0" align="center" justify="center">
+                                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                        </v-row>
+                                    </template>
+                                </v-img>
+                                <v-card-text class="pa-4">
+                                    <h3 class="text-h6 font-weight-bold mb-2">{{ product.name }}</h3>
+                                    <p class="text-body-2 text-medium-emphasis mb-3">{{ product.description }}</p>
+                                    <div class="d-flex align-center justify-space-between">
+                                        <span class="text-h6 font-weight-bold text-primary">
+                                            ¥{{ product.price }}
+                                        </span>
+                                        <v-btn color="primary" variant="elevated" size="small" rounded="xl"
+                                            @click.stop="addToCart(product)">
+                                            <v-icon start>mdi-cart-plus</v-icon>
+                                            加入购物车
+                                        </v-btn>
+                                    </div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </section>
+            </v-container>
+        </div>
     </div>
 </template>
 
 <style scoped>
-.v-card {
+.home-page {
+    position: relative;
+    min-height: 100vh;
+}
+
+.home-content {
+    margin-top: 64px;
+    /* 为固定导航栏留出空间 */
+}
+
+.home-carousel {
+    margin-top: 0;
+}
+
+.carousel-content {
+    height: 100%;
+    background: linear-gradient(45deg,
+            rgba(76, 175, 80, 0.8) 0%,
+            rgba(139, 195, 74, 0.8) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-card {
     transition: all 0.3s ease;
+    height: 100%;
 }
 
-.v-card:hover {
-    transform: translateY(-2px);
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* 欢迎横幅样式 */
-.welcome-banner {
-    position: relative;
-    overflow: hidden;
+.product-image {
+    transition: transform 0.3s ease;
 }
 
-.welcome-banner::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg,
-            rgba(255, 152, 0, 0.9) 0%,
-            rgba(255, 183, 77, 0.8) 50%,
-            rgba(255, 206, 119, 0.9) 100%);
-    z-index: 1;
+.product-card:hover .product-image {
+    transform: scale(1.05);
 }
 
-.welcome-content {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    padding: 80px 60px;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.welcome-icons {
-    font-size: 3.5rem;
-    line-height: 1;
-    opacity: 0.9;
-}
-
-.welcome-title {
-    font-size: 3.5rem !important;
-    font-weight: 800 !important;
-    color: white !important;
-    line-height: 1.2 !important;
-    margin-bottom: 24px !important;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-.welcome-subtitle {
-    font-size: 1.5rem !important;
-    color: white !important;
-    opacity: 0.95 !important;
-    font-weight: 500 !important;
-    margin-bottom: 32px !important;
-    line-height: 1.4 !important;
-}
-
-.welcome-description {
-    font-size: 1.1rem;
-    color: white;
-    opacity: 0.9;
-    line-height: 1.8;
-    margin: 0 0 48px 0;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.welcome-actions {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 48px;
-    flex-wrap: wrap;
-    gap: 24px;
-}
-
-.action-btn {
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    min-height: 64px !important;
-    padding: 0 32px !important;
-    letter-spacing: 0.5px !important;
-    transition: all 0.3s ease !important;
-}
-
-.primary-btn {
-    background: rgba(255, 255, 255, 0.95) !important;
-    color: #FF9800 !important;
-    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.3) !important;
-}
-
-.primary-btn:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.4) !important;
-    background: white !important;
-}
-
-.secondary-btn {
-    border: 2px solid white !important;
-    color: white !important;
-}
-
-.secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    transform: translateY(-3px) !important;
-}
-
-.welcome-features {
-    display: flex;
-    justify-content: center;
-    gap: 48px;
-    flex-wrap: wrap;
-}
-
-.feature-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    color: white;
-    opacity: 0.9;
-}
-
-.feature-item span {
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-}
-
-/* 动画效果 */
-@keyframes bounce-in {
-    0% {
-        transform: scale(0.3);
-        opacity: 0;
+/* 移动端适配 */
+@media (max-width: 600px) {
+    .home-content {
+        margin-top: 56px;
     }
 
-    50% {
-        transform: scale(1.05);
+    .carousel-content h2 {
+        font-size: 1.5rem !important;
     }
 
-    70% {
-        transform: scale(0.9);
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.bounce-in {
-    animation: bounce-in 0.8s ease-out;
-}
-
-/* 响应式调整 */
-@media (max-width: 1200px) {
-    .welcome-content {
-        padding: 60px 40px;
-    }
-
-    .welcome-actions {
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .action-btn {
-        width: 280px;
-    }
-
-    .welcome-features {
-        gap: 32px;
+    .carousel-content p {
+        font-size: 1rem !important;
     }
 }
 </style>

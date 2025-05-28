@@ -1,30 +1,31 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { sendVerificationCode, register } from '@/api/auth'
+import { register, sendVerificationCode as apiSendVerificationCode } from '@/api/auth'
+import AppNavigation from '@/components/AppNavigation.vue'
 
 const router = useRouter()
 
-// 表单数据 - 移除昵称字段
 const formData = ref({
     email: '',
     password: '',
     confirmPassword: '',
-    verificationCode: ''
+    code: '' // 添加验证码字段
 })
 
-// 表单验证
 const formValid = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const loading = ref(false)
-const codeLoading = ref(false)
-const countdown = ref(0)
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
+const agreeToTerms = ref(false)
+const showTerms = ref(false)
+const showPrivacy = ref(false)
+const sendingCode = ref(false)
+const codeCountdown = ref(0)
 
-// 验证规则
 const emailRules = [
     (v: string) => !!v || '邮箱不能为空',
     (v: string) => /.+@.+\..+/.test(v) || '请输入有效的邮箱地址'
@@ -32,31 +33,18 @@ const emailRules = [
 
 const passwordRules = [
     (v: string) => !!v || '密码不能为空',
-    (v: string) => v.length >= 6 || '密码至少6位字符',
-    (v: string) => /^(?=.*[a-zA-Z])(?=.*\d)/.test(v) || '密码必须包含字母和数字'
+    (v: string) => v.length >= 6 || '密码至少需要6位字符'
 ]
 
 const confirmPasswordRules = [
     (v: string) => !!v || '请确认密码',
-    (v: string) => v === formData.value.password || '两次密码输入不一致'
+    (v: string) => v === formData.value.password || '两次输入的密码不一致'
 ]
 
-// 验证码规则更新
 const codeRules = [
     (v: string) => !!v || '验证码不能为空',
-    (v: string) => /^\d{4}$/.test(v) || '验证码必须是4位数字'
+    (v: string) => /^\d{4}$/.test(v) || '请输入4位数字验证码'
 ]
-
-// 计算属性
-const canSendCode = computed(() => {
-    return formData.value.email &&
-        /.+@.+\..+/.test(formData.value.email) &&
-        countdown.value === 0
-})
-
-const countdownText = computed(() => {
-    return countdown.value > 0 ? `${countdown.value}s` : '获取验证码'
-})
 
 // 显示提示信息
 const showMessage = (message: string, color: string = 'success') => {
@@ -65,160 +53,186 @@ const showMessage = (message: string, color: string = 'success') => {
     snackbar.value = true
 }
 
-// 倒计时函数
-const startCountdown = () => {
-    countdown.value = 60
-    const timer = setInterval(() => {
-        countdown.value--
-        if (countdown.value <= 0) {
-            clearInterval(timer)
-        }
-    }, 1000)
-}
-
 // 发送验证码
-const handleSendCode = async () => {
-    if (!canSendCode.value) return
+const sendVerificationCode = async () => {
+    console.log('🎯 点击发送验证码按钮')
 
-    codeLoading.value = true
+    if (!formData.value.email) {
+        showMessage('请先输入邮箱地址', 'error')
+        return
+    }
+
+    if (!/.+@.+\..+/.test(formData.value.email)) {
+        showMessage('请输入有效的邮箱地址', 'error')
+        return
+    }
+
+    sendingCode.value = true
+    console.log('📤 开始发送验证码到:', formData.value.email)
+
     try {
-        const response = await sendVerificationCode(formData.value.email)
+        // 使用重命名的API函数
+        const result = await apiSendVerificationCode(formData.value.email)
+        console.log('📨 验证码发送响应:', result)
 
-        // 检查返回结果
-        if (response.code === 200) {
-            showMessage('验证码已发送到您的邮箱，请查收', 'success')
-            startCountdown()
+        if (result.code === 200) {
+            showMessage('验证码已发送到您的邮箱，请注意查收', 'success')
+
+            // 开始倒计时
+            codeCountdown.value = 60
+            const timer = setInterval(() => {
+                codeCountdown.value--
+                if (codeCountdown.value <= 0) {
+                    clearInterval(timer)
+                    console.log('⏰ 倒计时结束，可以重新发送验证码')
+                }
+            }, 1000)
+
         } else {
-            showMessage(response.msg || '发送验证码失败', 'error')
+            console.warn('⚠️ 验证码发送失败:', result.msg)
+            showMessage(result.msg || '验证码发送失败，请稍后重试', 'error')
         }
-    } catch (error: any) {
-        console.error('发送验证码失败:', error)
 
-        // 处理不同类型的错误
-        let message = '发送验证码失败，请稍后重试'
+    } catch (error: any) {
+        console.error('💥 发送验证码异常:', error)
+        let message = '验证码发送失败，请检查网络连接'
 
         if (error.name === 'BusinessError') {
-            // 业务错误，使用后端返回的消息
             message = error.message
         } else if (error.message) {
-            // 网络错误或其他错误
             message = error.message
         }
 
         showMessage(message, 'error')
+
     } finally {
-        codeLoading.value = false
+        sendingCode.value = false
+        console.log('🏁 验证码发送流程结束')
     }
 }
 
-// 提交注册
 const handleRegister = async () => {
-    console.log('注册按钮被点击')
-
-    if (!formValid.value) {
-        console.log('表单验证失败')
+    if (!formValid.value || !agreeToTerms.value) {
+        showMessage('请完善表单信息并同意服务条款', 'error')
         return
     }
 
-    // 防止重复提交
-    if (loading.value) {
-        console.log('正在处理中，忽略重复提交')
-        return
-    }
+    if (loading.value) return
 
     loading.value = true
     try {
-        console.log('开始注册请求')
         const response = await register({
             email: formData.value.email,
             password: formData.value.password,
-            code: formData.value.verificationCode
+            code: formData.value.code
         })
 
-        console.log('注册响应:', response)
-
-        if (response.code === 200) {
-            showMessage('注册成功！正在跳转到登录页...', 'success')
+        // 修复：使用response.data获取实际的API响应数据
+        if (response.data.code === 200) {
+            showMessage('注册成功！请登录您的账户', 'success')
             setTimeout(() => {
                 router.push('/login')
-            }, 1000)
+            }, 1500)
         } else {
-            showMessage(response.msg || '注册失败', 'error')
+            showMessage(response.data.msg || '注册失败', 'error')
         }
     } catch (error: any) {
         console.error('注册失败:', error)
-
         let message = '注册失败，请稍后重试'
-
         if (error.name === 'BusinessError') {
             message = error.message
         } else if (error.message) {
             message = error.message
         }
-
         showMessage(message, 'error')
     } finally {
         loading.value = false
     }
 }
 
-// 跳转到登录
 const goToLogin = () => {
     router.push('/login')
 }
 </script>
 
 <template>
-    <div class="register-wrapper">
+    <div class="register-page">
+        <!-- 使用统一的导航组件 -->
+        <AppNavigation :show-search-button="false" :show-cart-button="false" />
+
+        <!-- 注册内容 -->
         <div class="register-content">
             <v-card class="register-card" elevation="24" rounded="xl">
                 <!-- 标题区域 -->
                 <div class="register-header">
-                    <div class="fruit-icon">🍎</div>
-                    <h1 class="register-title">欢迎注册水果生活</h1>
-                    <p class="register-subtitle">开启您的健康水果之旅</p>
+                    <div class="fruit-icon">🥝</div>
+                    <h1 class="register-title">加入我们</h1>
+                    <p class="register-subtitle">创建您的水果生活账户</p>
                 </div>
 
                 <!-- 注册表单 -->
                 <div class="register-form">
-                    <!-- 只使用v-form的submit事件，移除按钮的click事件 -->
                     <v-form v-model="formValid" @submit.prevent="handleRegister">
                         <!-- 邮箱输入 -->
                         <v-text-field v-model="formData.email" label="邮箱地址" prepend-inner-icon="mdi-email"
                             :rules="emailRules" variant="outlined" class="form-field" rounded="lg" clearable
-                            density="comfortable" autocomplete="email" name="email" type="email"></v-text-field>
+                            density="comfortable" autocomplete="email" name="email" type="email">
+                        </v-text-field>
+
+                        <!-- 验证码输入 -->
+                        <div class="code-input-container">
+                            <v-text-field v-model="formData.code" label="邮箱验证码" prepend-inner-icon="mdi-shield-check"
+                                :rules="codeRules" variant="outlined" class="code-field" rounded="lg"
+                                density="comfortable" placeholder="请输入4位验证码" maxlength="4">
+                            </v-text-field>
+                            <v-btn :disabled="sendingCode || codeCountdown > 0 || !formData.email"
+                                :loading="sendingCode" color="primary" variant="outlined" class="send-code-btn"
+                                rounded="lg" @click="sendVerificationCode">
+                                {{ codeCountdown > 0 ? `${codeCountdown}s后重发` : '发送验证码' }}
+                            </v-btn>
+                        </div>
 
                         <!-- 密码输入 -->
                         <v-text-field v-model="formData.password" label="密码" prepend-inner-icon="mdi-lock"
                             :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                             :type="showPassword ? 'text' : 'password'" :rules="passwordRules" variant="outlined"
                             class="form-field" rounded="lg" density="comfortable" autocomplete="new-password"
-                            name="password" @click:append-inner="showPassword = !showPassword"></v-text-field>
+                            name="password" @click:append-inner="showPassword = !showPassword">
+                        </v-text-field>
 
-                        <!-- 确认密码 -->
+                        <!-- 确认密码输入 -->
                         <v-text-field v-model="formData.confirmPassword" label="确认密码"
                             prepend-inner-icon="mdi-lock-check"
                             :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
                             :type="showConfirmPassword ? 'text' : 'password'" :rules="confirmPasswordRules"
                             variant="outlined" class="form-field" rounded="lg" density="comfortable"
                             autocomplete="new-password" name="confirmPassword"
-                            @click:append-inner="showConfirmPassword = !showConfirmPassword"></v-text-field>
+                            @click:append-inner="showConfirmPassword = !showConfirmPassword">
+                        </v-text-field>
 
-                        <!-- 验证码输入 -->
-                        <div class="verification-row">
-                            <v-text-field v-model="formData.verificationCode" label="4位验证码"
-                                prepend-inner-icon="mdi-shield-check" :rules="codeRules" variant="outlined"
-                                class="verification-input" rounded="lg" maxlength="4"
-                                density="comfortable"></v-text-field>
-                            <v-btn :disabled="!canSendCode" :loading="codeLoading" color="primary" variant="outlined"
-                                class="verification-btn" rounded="lg" @click="handleSendCode">
-                                {{ countdownText }}
-                            </v-btn>
+                        <!-- 服务条款同意 -->
+                        <div class="terms-section">
+                            <v-checkbox v-model="agreeToTerms" color="primary" density="compact" hide-details>
+                                <template v-slot:label>
+                                    <span class="terms-text">
+                                        我已阅读并同意
+                                        <v-btn color="primary" variant="text" size="small" class="terms-link"
+                                            @click="showTerms = true">
+                                            《服务条款》
+                                        </v-btn>
+                                        和
+                                        <v-btn color="primary" variant="text" size="small" class="terms-link"
+                                            @click="showPrivacy = true">
+                                            《隐私政策》
+                                        </v-btn>
+                                    </span>
+                                </template>
+                            </v-checkbox>
                         </div>
 
                         <!-- 注册按钮 -->
-                        <v-btn :disabled="!formValid || loading" :loading="loading" color="primary" variant="elevated"
-                            size="x-large" rounded="xl" block class="register-btn" type="submit">
+                        <v-btn :disabled="!formValid || !agreeToTerms || loading" :loading="loading" color="primary"
+                            variant="elevated" size="x-large" rounded="xl" block class="register-btn" type="submit">
                             <v-icon start>mdi-account-plus</v-icon>
                             立即注册
                         </v-btn>
@@ -244,24 +258,56 @@ const goToLogin = () => {
                 </v-btn>
             </template>
         </v-snackbar>
+
+        <!-- 服务条款对话框 -->
+        <v-dialog v-model="showTerms" max-width="600px">
+            <v-card rounded="xl">
+                <v-card-title class="text-h5 font-weight-bold">服务条款</v-card-title>
+                <v-card-text>
+                    <p>欢迎使用水果生活服务...</p>
+                    <!-- 这里可以放置详细的服务条款内容 -->
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" @click="showTerms = false">我知道了</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- 隐私政策对话框 -->
+        <v-dialog v-model="showPrivacy" max-width="600px">
+            <v-card rounded="xl">
+                <v-card-title class="text-h5 font-weight-bold">隐私政策</v-card-title>
+                <v-card-text>
+                    <p>我们重视您的隐私保护...</p>
+                    <!-- 这里可以放置详细的隐私政策内容 -->
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" @click="showPrivacy = false">我知道了</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
 <style scoped>
-.register-wrapper {
+.register-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+    display: flex;
+    flex-direction: column;
+}
+
+.register-content {
+    margin-top: 64px;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     box-sizing: border-box;
-}
-
-.register-content {
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
 }
 
 .register-card {
@@ -270,6 +316,8 @@ const goToLogin = () => {
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
     padding: 48px 40px;
+    width: 100%;
+    max-width: 500px;
 }
 
 .register-header {
@@ -308,22 +356,38 @@ const goToLogin = () => {
     margin-bottom: 24px;
 }
 
-.verification-row {
+.code-input-container {
     display: flex;
-    gap: 16px;
-    margin-bottom: 32px;
-    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
 }
 
-.verification-input {
+.code-field {
     flex: 1;
 }
 
-.verification-btn {
-    height: 56px;
+.send-code-btn {
     min-width: 120px;
+    height: 56px;
+    font-weight: 600;
+}
+
+.terms-section {
+    margin-bottom: 24px;
+}
+
+.terms-text {
     font-size: 14px;
-    margin-top: 0;
+    color: rgba(0, 0, 0, 0.7);
+    line-height: 1.4;
+}
+
+.terms-link {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    min-height: auto !important;
+    padding: 0 4px !important;
+    text-decoration: underline;
 }
 
 .register-btn {
@@ -354,6 +418,26 @@ const goToLogin = () => {
 .login-btn-text {
     font-size: 16px !important;
     font-weight: 600 !important;
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+    .register-content {
+        margin-top: 56px;
+        padding: 16px;
+    }
+
+    .register-card {
+        padding: 32px 24px;
+    }
+
+    .register-title {
+        font-size: 1.75rem;
+    }
+
+    .fruit-icon {
+        font-size: 3rem;
+    }
 }
 
 /* 输入框样式 */
@@ -388,5 +472,14 @@ const goToLogin = () => {
 /* 按钮禁用状态 */
 .v-btn:disabled {
     opacity: 0.6 !important;
+}
+
+/* 复选框样式 */
+:deep(.v-selection-control) {
+    align-items: flex-start !important;
+}
+
+:deep(.v-selection-control__wrapper) {
+    margin-top: 2px;
 }
 </style>

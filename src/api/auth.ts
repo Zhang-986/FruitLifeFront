@@ -114,40 +114,12 @@ export const sendVerificationCode = async (email: string): Promise<ApiResponse<s
   }
 }
 
-// 注册接口 - 简化为只发送email、code、password
-export const register = async (data: {
-  email: string
-  password: string
-  code: string
-}): Promise<ApiResponse<any>> => {
-  try {
-    // 只发送三个必要字段
-    const requestData = {
-      email: data.email,
-      password: data.password,
-      code: data.code
-    }
-    
-    console.log('准备发送注册请求:', requestData)
-    const response = await api.post<ApiResponse<any>>('/user/register', requestData)
-    
-    const result = response.data
-    console.log('注册请求响应:', result)
-    
-    // 检查业务状态码
-    if (result.code === 200) {
-      return result
-    } else {
-      // 业务失败
-      const error = new Error(result.msg || '请求失败')
-      error.name = 'BusinessError'
-      ;(error as any).code = result.code
-      throw error
-    }
-  } catch (error) {
-    console.error('注册请求失败:', error)
-    throw error
-  }
+/**
+ * 用户注册接口
+ * @param data 注册数据
+ */
+export const register = (data: { email: string; password: string; code: string }) => {
+  return api.post<ApiResponse<string>>('/user/register', data)
 }
 
 // 登录接口 - 按后端DTO要求发送email和password

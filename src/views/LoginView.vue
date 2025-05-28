@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/api/auth'
 import { AuthManager } from '@/utils/auth-manager'
+import AppNavigation from '@/components/AppNavigation.vue'
 
 const router = useRouter()
 
@@ -157,7 +158,11 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="login-wrapper">
+    <div class="login-page">
+        <!-- 使用统一的导航组件 -->
+        <AppNavigation :show-search-button="false" :show-cart-button="false" />
+
+        <!-- 登录内容 -->
         <div class="login-content">
             <v-card class="login-card" elevation="24" rounded="xl">
                 <!-- 标题区域 -->
@@ -173,19 +178,22 @@ onMounted(() => {
                         <!-- 邮箱输入 -->
                         <v-text-field v-model="formData.email" label="邮箱地址" prepend-inner-icon="mdi-email"
                             :rules="emailRules" variant="outlined" class="form-field" rounded="lg" clearable
-                            density="comfortable" autocomplete="email" name="email" type="email"></v-text-field>
+                            density="comfortable" autocomplete="email" name="email" type="email">
+                        </v-text-field>
 
                         <!-- 密码输入 -->
                         <v-text-field v-model="formData.password" label="密码" prepend-inner-icon="mdi-lock"
                             :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                             :type="showPassword ? 'text' : 'password'" :rules="passwordRules" variant="outlined"
                             class="form-field" rounded="lg" density="comfortable" autocomplete="current-password"
-                            name="password" @click:append-inner="showPassword = !showPassword"></v-text-field>
+                            name="password" @click:append-inner="showPassword = !showPassword">
+                        </v-text-field>
 
                         <!-- 记住密码选项 -->
                         <div class="remember-section">
                             <v-checkbox v-model="rememberPassword" label="记住密码" color="primary" density="compact"
-                                hide-details></v-checkbox>
+                                hide-details>
+                            </v-checkbox>
 
                             <v-btn color="primary" variant="text" size="small" class="forgot-password-link"
                                 @click="goToForgotPassword">
@@ -193,7 +201,7 @@ onMounted(() => {
                             </v-btn>
                         </div>
 
-                        <!-- 登录按钮 - 移除@click事件，只保留type="submit" -->
+                        <!-- 登录按钮 -->
                         <v-btn :disabled="!formValid || loading" :loading="loading" color="primary" variant="elevated"
                             size="x-large" rounded="xl" block class="login-btn" type="submit">
                             <v-icon start>mdi-login</v-icon>
@@ -225,20 +233,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.login-wrapper {
+.login-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    position: relative;
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+    display: flex;
+    flex-direction: column;
+}
+
+.login-content {
+    margin-top: 64px;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     box-sizing: border-box;
-}
-
-.login-content {
-    width: 100%;
-    max-width: 450px;
-    margin: 0 auto;
 }
 
 .login-card {
@@ -247,6 +257,8 @@ onMounted(() => {
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
     padding: 48px 40px;
+    width: 100%;
+    max-width: 450px;
 }
 
 .login-header {
@@ -263,7 +275,7 @@ onMounted(() => {
 .login-title {
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -301,19 +313,19 @@ onMounted(() => {
 }
 
 .login-btn {
-    background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%) !important;
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%) !important;
     color: white !important;
     font-weight: 600 !important;
     font-size: 18px !important;
     height: 56px !important;
     margin-bottom: 24px;
-    box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3) !important;
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3) !important;
     transition: all 0.3s ease !important;
 }
 
 .login-btn:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 12px 30px rgba(255, 152, 0, 0.4) !important;
+    box-shadow: 0 12px 30px rgba(76, 175, 80, 0.4) !important;
 }
 
 .register-link {
@@ -330,6 +342,26 @@ onMounted(() => {
     font-weight: 600 !important;
 }
 
+/* 移动端适配 */
+@media (max-width: 600px) {
+    .login-content {
+        margin-top: 56px;
+        padding: 16px;
+    }
+
+    .login-card {
+        padding: 32px 24px;
+    }
+
+    .login-title {
+        font-size: 1.75rem;
+    }
+
+    .fruit-icon {
+        font-size: 3rem;
+    }
+}
+
 /* 输入框样式 */
 :deep(.v-field) {
     font-size: 16px !important;
@@ -342,7 +374,7 @@ onMounted(() => {
 }
 
 :deep(.v-field--focused) {
-    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.3) !important;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3) !important;
 }
 
 :deep(.v-label) {
