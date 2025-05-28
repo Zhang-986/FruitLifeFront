@@ -28,10 +28,11 @@ api.interceptors.request.use(
     // 使用IP拦截器处理客户端IP
     config = await requestInterceptor.interceptRequest(config)
     
-    // 从localStorage获取token并添加到请求头
-    const token = localStorage.getItem('token')
+    // 从localStorage获取token并添加到请求头 - 使用后端要求的token字段名
+    const token = localStorage.getItem('fruit_life_token')
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      // 后端拦截器期望的是'token'头部，不是'Authorization'
+      config.headers['token'] = token
       console.log('请求携带token:', token.substring(0, 20) + '...')
     }
     
@@ -56,6 +57,25 @@ api.interceptors.response.use(
   },
   (error: AxiosError) => {
     console.error('API Error:', error)
+    
+    // 特殊处理401未认证错误
+    if (error.response?.status === 401) {
+      console.warn('❌ 收到401未认证响应，清除token并跳转登录页')
+      
+      // 清除本地存储的认证信息
+      localStorage.removeItem('fruit_life_token')
+      localStorage.removeItem('fruit_life_user')
+      
+      // 动态导入router并跳转到登录页
+      import('@/router').then(({ default: router }) => {
+        if (router.currentRoute.value.path !== '/login') {
+          router.push('/login')
+        }
+      })
+      
+      error.message = '登录已过期，请重新登录'
+      return Promise.reject(error)
+    }
     
     // 详细的错误处理
     if (error.code === 'ECONNREFUSED' || error.message.includes('ECONNREFUSED')) {

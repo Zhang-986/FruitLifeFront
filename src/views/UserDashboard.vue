@@ -9,15 +9,9 @@
             <v-card class="welcome-card mb-6" elevation="8" rounded="xl">
                 <v-card-text class="pa-8">
                     <div class="d-flex align-center">
-                        <v-avatar size="80" color="primary" class="mr-6">
-                            <v-icon size="40" color="white">mdi-account-circle</v-icon>
-                        </v-avatar>
                         <div>
-                            <h2 class="text-h4 font-weight-bold mb-2">
-                                欢迎回来，{{ displayName }}！🍎
-                            </h2>
                             <p class="text-h6 text-medium-emphasis mb-0">
-                                享受您的专属水果生活体验
+                                欢迎回来，{{ displayName }}
                             </p>
                             <v-chip color="success" size="small" prepend-icon="mdi-check-circle" class="mt-2">
                                 已登录
@@ -46,46 +40,6 @@
                     </v-card>
                 </v-col>
             </v-row>
-
-            <!-- 快速统计 -->
-            <v-row class="mt-6">
-                <v-col cols="12">
-                    <v-card elevation="4" rounded="xl">
-                        <v-card-title class="text-h5 font-weight-bold pa-6">
-                            <v-icon color="primary" class="mr-2">mdi-chart-line</v-icon>
-                            我的数据概览
-                        </v-card-title>
-                        <v-card-text class="pa-6">
-                            <v-row>
-                                <v-col cols="6" md="3" class="text-center">
-                                    <div class="stat-item">
-                                        <h3 class="text-h4 font-weight-bold text-primary">12</h3>
-                                        <p class="text-body-2">订单总数</p>
-                                    </div>
-                                </v-col>
-                                <v-col cols="6" md="3" class="text-center">
-                                    <div class="stat-item">
-                                        <h3 class="text-h4 font-weight-bold text-success">¥288</h3>
-                                        <p class="text-body-2">消费总额</p>
-                                    </div>
-                                </v-col>
-                                <v-col cols="6" md="3" class="text-center">
-                                    <div class="stat-item">
-                                        <h3 class="text-h4 font-weight-bold text-warning">5</h3>
-                                        <p class="text-body-2">收藏商品</p>
-                                    </div>
-                                </v-col>
-                                <v-col cols="6" md="3" class="text-center">
-                                    <div class="stat-item">
-                                        <h3 class="text-h4 font-weight-bold text-info">98%</h3>
-                                        <p class="text-body-2">满意度</p>
-                                    </div>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
         </div>
     </div>
 </template>
@@ -93,17 +47,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { AuthManager } from '@/utils/auth-manager'
 import { useAuthStore } from '@/stores/auth'
 import AppNavigation from '@/components/AppNavigation.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-// 使用响应式的认证状态
-const displayName = computed(() => authStore.displayName)
-const isLoggedIn = computed(() => authStore.isLoggedIn)
+// 计算用户显示名称
+const displayName = computed(() => {
+    return AuthManager.getDisplayName()
+})
 
-// 功能模块
+// 功能卡片数据
 const features = ref([
     {
         title: '我的订单',
@@ -121,7 +77,7 @@ const features = ref([
     },
     {
         title: '个人资料',
-        description: '编辑个人信息和设置',
+        description: '编辑个人信息和偏好',
         icon: 'mdi-account-edit',
         color: 'info',
         route: '/user/profile'
@@ -135,7 +91,7 @@ const features = ref([
     },
     {
         title: '我的收藏',
-        description: '查看收藏的水果商品',
+        description: '查看收藏的商品',
         icon: 'mdi-heart',
         color: 'pink',
         route: '/user/favorites'
@@ -157,56 +113,51 @@ const navigateToFeature = (route: string) => {
 // 退出登录
 const handleLogout = () => {
     console.log('🚪 用户点击退出登录')
-    authStore.logout()
-    console.log('✅ 退出登录完成，跳转到登录页')
-    router.push('/login')
+
+    // 清除认证信息
+    AuthManager.logout()
+
+    // 跳转到登录页
+    router.replace('/login')
 }
 
 // 页面加载时检查登录状态
 onMounted(() => {
-    if (!isLoggedIn.value) {
-        console.log('🔒 未登录，重定向到登录页')
-        router.push('/login')
+    console.log('🔍 UserDashboard加载，检查登录状态')
+
+    if (!AuthManager.isLoggedIn()) {
+        console.log('❌ 未登录，重定向到登录页')
+        router.replace('/login')
+        return
     }
+
+    console.log('✅ 已登录，显示用户界面')
+    AuthManager.debugStorage()
 })
 </script>
 
 <style scoped>
 .user-dashboard-page {
     min-height: 100vh;
-    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    padding: 20px;
 }
 
 .user-dashboard {
     max-width: 1200px;
-    margin: 64px auto 0;
-    /* 顶部为导航栏留出空间 */
-    padding: 24px;
-}
-
-/* 移动端适配 */
-@media (max-width: 600px) {
-    .user-dashboard {
-        margin-top: 56px;
-        padding: 16px;
-    }
+    margin: 0 auto;
 }
 
 .welcome-card {
-    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
-    color: white;
-}
-
-.welcome-card .v-card-text {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px);
 }
 
 .feature-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(10px);
     transition: all 0.3s ease;
     cursor: pointer;
-    height: 100%;
 }
 
 .feature-card:hover {
@@ -215,35 +166,14 @@ onMounted(() => {
 }
 
 .feature-icon {
-    height: 80px;
     display: flex;
-    align-items: center;
     justify-content: center;
-}
-
-.stat-item {
-    padding: 16px;
-    border-radius: 12px;
-    background: rgba(76, 175, 80, 0.05);
+    align-items: center;
 }
 
 @media (max-width: 600px) {
-    .user-dashboard {
+    .user-dashboard-page {
         padding: 16px;
-    }
-
-    .welcome-card .v-card-text {
-        padding: 24px !important;
-    }
-
-    .welcome-card .d-flex {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .welcome-card .v-avatar {
-        margin-bottom: 16px;
-        margin-right: 0 !important;
     }
 }
 </style>

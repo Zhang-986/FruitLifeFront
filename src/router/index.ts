@@ -277,6 +277,11 @@ router.beforeEach((to, from, next) => {
   console.log('🔍 当前登录状态:', isLoggedIn)
   console.log('🎯 目标路由需要认证:', to.meta.requiresAuth)
   
+  // 检查token是否即将过期
+  if (isLoggedIn && AuthManager.isTokenExpiringSoon()) {
+    console.warn('⚠️ Token即将过期，建议重新登录')
+  }
+  
   // 检查路由是否需要认证
   if (to.meta.requiresAuth && !isLoggedIn) {
     // 需要登录但未登录，跳转到登录页

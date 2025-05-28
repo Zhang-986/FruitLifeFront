@@ -92,8 +92,8 @@ const handleLogin = async () => {
             // 处理记住密码
             handleRememberPassword()
 
-            // 使用AuthManager保存token
-            console.log('🔐 保存token和用户信息...')
+            // 使用AuthManager保存JWT token - response.data就是JWT令牌
+            console.log('🔐 保存JWT token和用户信息...')
             AuthManager.saveToken(response.data, formData.value.email)
 
             // 调试存储状态
