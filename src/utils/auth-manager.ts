@@ -27,8 +27,7 @@ export class AuthManager {
    * 获取当前token
    */
   static getToken(): string | null {
-    const store = this.getStore()
-    return store.getToken()
+    return localStorage.getItem('fruit_life_token')
   }
   
   /**
@@ -100,13 +99,5 @@ export class AuthManager {
   static isTokenExpiringSoon(): boolean {
     const store = this.getStore()
     return store.isTokenExpiringSoon()
-  }
-  
-  /**
-   * 调试：显示当前存储状态
-   */
-  static debugStorage() {
-    const store = this.getStore()
-    store.debugStorage()
   }
 }

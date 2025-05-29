@@ -12,8 +12,11 @@ export const useAuthStore = defineStore('auth', () => {
   })
   
   const displayName = computed(() => {
+    // 只从认证信息中获取显示名，个人资料的昵称在各组件中单独处理
     if (userInfo.value?.email) {
-      return userInfo.value.email.split('@')[0]
+        const emailPrefix = userInfo.value.email.split('@')[0]
+        // 避免返回过长的邮箱前缀
+        return emailPrefix.length > 10 ? emailPrefix.substring(0, 10) + '...' : emailPrefix
     }
     return '用户'
   })
@@ -99,17 +102,6 @@ export const useAuthStore = defineStore('auth', () => {
     return hoursSinceLogin > 20
   }
   
-  // 调试存储状态
-  const debugStorage = () => {
-    console.group('🔍 认证状态检查')
-    console.log('Store Token:', token.value)
-    console.log('Store UserInfo:', userInfo.value)
-    console.log('Store 登录状态:', isLoggedIn.value)
-    console.log('LocalStorage Token:', localStorage.getItem('fruit_life_token'))
-    console.log('LocalStorage UserInfo:', localStorage.getItem('fruit_life_user'))
-    console.groupEnd()
-  }
-  
   return {
     // 状态
     token,
@@ -120,10 +112,9 @@ export const useAuthStore = defineStore('auth', () => {
     // 方法
     initializeAuth,
     saveToken,
-    logout, // 现在是异步方法
+    logout,
     getToken,
     getUserInfo,
-    isTokenExpiringSoon,
-    debugStorage
+    isTokenExpiringSoon
   }
 })

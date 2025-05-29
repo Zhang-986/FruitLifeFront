@@ -1,8 +1,19 @@
-// 后端统一返回结果类型
+// API响应类型定义
 export interface ApiResponse<T = any> {
   code: number
   msg: string
   data: T
+}
+
+// 业务错误类型
+export class BusinessError extends Error {
+  code: number
+  
+  constructor(message: string, code: number = 500) {
+    super(message)
+    this.name = 'BusinessError'
+    this.code = code
+  }
 }
 
 // 用户相关接口类型 - 简化为只包含必要字段

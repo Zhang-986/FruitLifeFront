@@ -1,272 +1,239 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { AuthManager } from '@/utils/auth-manager'
-import HomeView from '../views/HomeView.vue'
+import { createRetryableImport } from '@/utils/route-helper'
+
+// 使用动态导入和重试机制
+const routes = [
+  {
+    path: '/',
+    name: 'home',
+    component: createRetryableImport('../views/HomeView.vue'),
+    meta: { title: '首页 - 果润生活', requiresAuth: false }
+  },
+  {
+    path: '/about',
+    name: 'about',
+    component: createRetryableImport('../views/AboutView.vue'),
+    meta: { title: '关于我们 - 果润生活', requiresAuth: false }
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: createRetryableImport('../views/RegisterView.vue'),
+    meta: { title: '用户注册 - 果润生活', requiresAuth: false }
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: createRetryableImport('../views/LoginView.vue'),
+    meta: { title: '用户登录 - 果润生活', requiresAuth: false }
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: createRetryableImport('../views/ForgotPasswordView.vue'),
+    meta: { title: '找回密码 - 果润生活', requiresAuth: false }
+  },
+  // 用户专属区域
+  {
+    path: '/user',
+    name: 'user-dashboard',
+    component: createRetryableImport('../views/UserDashboard.vue'),
+    meta: { title: '用户中心 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/user/profile-wizard',
+    name: 'profile-wizard',
+    component: createRetryableImport('../views/ProfileWizardView.vue'),
+    meta: { title: '资料完善向导 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/user/profile',
+    name: 'user-profile',
+    component: createRetryableImport('../views/UserProfile.vue'),
+    meta: { title: '个人资料 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/user/orders',
+    name: 'user-orders',
+    component: () => Promise.resolve({
+      template: `
+        <div class="pa-6">
+          <v-card elevation="4" rounded="xl">
+            <v-card-title class="text-h4 font-weight-bold pa-6">
+              <v-icon color="primary" class="mr-3">mdi-package-variant</v-icon>
+              我的订单
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <v-alert
+                type="info"
+                variant="tonal"
+                rounded="lg"
+                class="mb-4"
+              >
+                <v-icon slot="prepend">mdi-information</v-icon>
+                订单管理功能正在开发中，敬请期待！
+              </v-alert>
+              <v-btn color="primary" @click="$router.push('/user')">
+                <v-icon start>mdi-arrow-left</v-icon>
+                返回用户中心
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </div>
+      `
+    }),
+    meta: { title: '我的订单 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/user/cart',
+    name: 'user-cart',
+    component: () => Promise.resolve({
+      template: `
+        <div class="pa-6">
+          <v-card elevation="4" rounded="xl">
+            <v-card-title class="text-h4 font-weight-bold pa-6">
+              <v-icon color="success" class="mr-3">mdi-cart</v-icon>
+              购物车
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <v-alert
+                type="info"
+                variant="tonal"
+                rounded="lg"
+                class="mb-4"
+              >
+                <v-icon slot="prepend">mdi-information</v-icon>
+                购物车功能正在开发中，敬请期待！
+              </v-alert>
+              <v-btn color="primary" @click="$router.push('/user')">
+                <v-icon start>mdi-arrow-left</v-icon>
+                返回用户中心
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </div>
+      `
+    }),
+    meta: { title: '购物车 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/user/addresses',
+    name: 'user-addresses',
+    component: () => Promise.resolve({
+      template: `
+        <div class="pa-6">
+          <v-card elevation="4" rounded="xl">
+            <v-card-title class="text-h4 font-weight-bold pa-6">
+              <v-icon color="warning" class="mr-3">mdi-map-marker</v-icon>
+              收货地址
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <v-alert
+                type="info"
+                variant="tonal"
+                rounded="lg"
+                class="mb-4"
+              >
+                <v-icon slot="prepend">mdi-information</v-icon>
+                地址管理功能正在开发中，敬请期待！
+              </v-alert>
+              <v-btn color="primary" @click="$router.push('/user')">
+                <v-icon start>mdi-arrow-left</v-icon>
+                返回用户中心
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </div>
+      `
+    }),
+    meta: { title: '收货地址 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/user/favorites',
+    name: 'user-favorites',
+    component: () => Promise.resolve({
+      template: `
+        <div class="pa-6">
+          <v-card elevation="4" rounded="xl">
+            <v-card-title class="text-h4 font-weight-bold pa-6">
+              <v-icon color="pink" class="mr-3">mdi-heart</v-icon>
+              我的收藏
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <v-alert
+                type="info"
+                variant="tonal"
+                rounded="lg"
+                class="mb-4"
+              >
+                <v-icon slot="prepend">mdi-information</v-icon>
+                收藏功能正在开发中，敬请期待！
+              </v-alert>
+              <v-btn color="primary" @click="$router.push('/user')">
+                <v-icon start>mdi-arrow-left</v-icon>
+                返回用户中心
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </div>
+      `
+    }),
+    meta: { title: '我的收藏 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/user/coupons',
+    name: 'user-coupons',
+    component: () => Promise.resolve({
+      template: `
+        <div class="pa-6">
+          <v-card elevation="4" rounded="xl">
+            <v-card-title class="text-h4 font-weight-bold pa-6">
+              <v-icon color="orange" class="mr-3">mdi-ticket-percent</v-icon>
+              优惠券
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <v-alert
+                type="info"
+                variant="tonal"
+                rounded="lg"
+                class="mb-4"
+              >
+                <v-icon slot="prepend">mdi-information</v-icon>
+                优惠券功能正在开发中，敬请期待！
+              </v-alert>
+              <v-btn color="primary" @click="$router.push('/user')">
+                <v-icon start>mdi-arrow-left</v-icon>
+                返回用户中心
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </div>
+      `
+    }),
+    meta: { title: '优惠券 - 果润生活', requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFoundView.vue').catch(() => {
+      return {
+        template: `
+          <div style="text-align: center; padding: 50px;">
+            <h1>页面未找到</h1>
+            <p>抱歉，您访问的页面不存在</p>
+            <button @click="$router.push('/')">返回首页</button>
+          </div>
+        `
+      }
+    }),
+    meta: { title: '页面未找到 - 果润生活' }
+  }
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: { title: '首页 - 果润生活', requiresAuth: false }
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue').catch(err => {
-        console.error('Failed to load AboutView:', err)
-        return import('../views/AboutView.vue')
-      }),
-      meta: { title: '关于我们 - 果润生活', requiresAuth: false }
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('../views/RegisterView.vue').catch(err => {
-        console.error('Failed to load RegisterView:', err)
-        return import('../views/RegisterView.vue')
-      }),
-      meta: { title: '用户注册 - 果润生活', requiresAuth: false }
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('../views/LoginView.vue').catch(err => {
-        console.error('Failed to load LoginView:', err)
-        return import('../views/LoginView.vue')
-      }),
-      meta: { title: '用户登录 - 果润生活', requiresAuth: false }
-    },
-    {
-      path: '/forgot-password',
-      name: 'forgot-password',
-      component: () => import('../views/ForgotPasswordView.vue').catch(err => {
-        console.error('Failed to load ForgotPasswordView:', err)
-        return import('../views/ForgotPasswordView.vue')
-      }),
-      meta: { title: '找回密码 - 果润生活', requiresAuth: false }
-    },
-    // 用户专属区域
-    {
-      path: '/user',
-      name: 'user-dashboard',
-      component: () => import('../views/UserDashboard.vue').catch(err => {
-        console.error('Failed to load UserDashboard:', err)
-        return import('../views/UserDashboard.vue')
-      }),
-      meta: { title: '用户中心 - 果润生活', requiresAuth: true }
-    },
-    {
-      path: '/user/orders',
-      name: 'user-orders',
-      component: () => Promise.resolve({
-        template: `
-          <div class="pa-6">
-            <v-card elevation="4" rounded="xl">
-              <v-card-title class="text-h4 font-weight-bold pa-6">
-                <v-icon color="primary" class="mr-3">mdi-package-variant</v-icon>
-                我的订单
-              </v-card-title>
-              <v-card-text class="pa-6">
-                <v-alert
-                  type="info"
-                  variant="tonal"
-                  rounded="lg"
-                  class="mb-4"
-                >
-                  <v-icon slot="prepend">mdi-information</v-icon>
-                  订单管理功能正在开发中，敬请期待！
-                </v-alert>
-                <v-btn color="primary" @click="$router.push('/user')">
-                  <v-icon start>mdi-arrow-left</v-icon>
-                  返回用户中心
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </div>
-        `
-      }),
-      meta: { title: '我的订单 - 果润生活', requiresAuth: true }
-    },
-    {
-      path: '/user/cart',
-      name: 'user-cart',
-      component: () => Promise.resolve({
-        template: `
-          <div class="pa-6">
-            <v-card elevation="4" rounded="xl">
-              <v-card-title class="text-h4 font-weight-bold pa-6">
-                <v-icon color="success" class="mr-3">mdi-cart</v-icon>
-                购物车
-              </v-card-title>
-              <v-card-text class="pa-6">
-                <v-alert
-                  type="info"
-                  variant="tonal"
-                  rounded="lg"
-                  class="mb-4"
-                >
-                  <v-icon slot="prepend">mdi-information</v-icon>
-                  购物车功能正在开发中，敬请期待！
-                </v-alert>
-                <v-btn color="primary" @click="$router.push('/user')">
-                  <v-icon start>mdi-arrow-left</v-icon>
-                  返回用户中心
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </div>
-        `
-      }),
-      meta: { title: '购物车 - 果润生活', requiresAuth: true }
-    },
-    {
-      path: '/user/profile',
-      name: 'user-profile',
-      component: () => Promise.resolve({
-        template: `
-          <div class="pa-6">
-            <v-card elevation="4" rounded="xl">
-              <v-card-title class="text-h4 font-weight-bold pa-6">
-                <v-icon color="info" class="mr-3">mdi-account-edit</v-icon>
-                个人资料
-              </v-card-title>
-              <v-card-text class="pa-6">
-                <v-alert
-                  type="info"
-                  variant="tonal"
-                  rounded="lg"
-                  class="mb-4"
-                >
-                  <v-icon slot="prepend">mdi-information</v-icon>
-                  个人资料管理功能正在开发中，敬请期待！
-                </v-alert>
-                <v-btn color="primary" @click="$router.push('/user')">
-                  <v-icon start>mdi-arrow-left</v-icon>
-                  返回用户中心
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </div>
-        `
-      }),
-      meta: { title: '个人资料 - 果润生活', requiresAuth: true }
-    },
-    {
-      path: '/user/addresses',
-      name: 'user-addresses',
-      component: () => Promise.resolve({
-        template: `
-          <div class="pa-6">
-            <v-card elevation="4" rounded="xl">
-              <v-card-title class="text-h4 font-weight-bold pa-6">
-                <v-icon color="warning" class="mr-3">mdi-map-marker</v-icon>
-                收货地址
-              </v-card-title>
-              <v-card-text class="pa-6">
-                <v-alert
-                  type="info"
-                  variant="tonal"
-                  rounded="lg"
-                  class="mb-4"
-                >
-                  <v-icon slot="prepend">mdi-information</v-icon>
-                  地址管理功能正在开发中，敬请期待！
-                </v-alert>
-                <v-btn color="primary" @click="$router.push('/user')">
-                  <v-icon start>mdi-arrow-left</v-icon>
-                  返回用户中心
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </div>
-        `
-      }),
-      meta: { title: '收货地址 - 果润生活', requiresAuth: true }
-    },
-    {
-      path: '/user/favorites',
-      name: 'user-favorites',
-      component: () => Promise.resolve({
-        template: `
-          <div class="pa-6">
-            <v-card elevation="4" rounded="xl">
-              <v-card-title class="text-h4 font-weight-bold pa-6">
-                <v-icon color="pink" class="mr-3">mdi-heart</v-icon>
-                我的收藏
-              </v-card-title>
-              <v-card-text class="pa-6">
-                <v-alert
-                  type="info"
-                  variant="tonal"
-                  rounded="lg"
-                  class="mb-4"
-                >
-                  <v-icon slot="prepend">mdi-information</v-icon>
-                  收藏功能正在开发中，敬请期待！
-                </v-alert>
-                <v-btn color="primary" @click="$router.push('/user')">
-                  <v-icon start>mdi-arrow-left</v-icon>
-                  返回用户中心
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </div>
-        `
-      }),
-      meta: { title: '我的收藏 - 果润生活', requiresAuth: true }
-    },
-    {
-      path: '/user/coupons',
-      name: 'user-coupons',
-      component: () => Promise.resolve({
-        template: `
-          <div class="pa-6">
-            <v-card elevation="4" rounded="xl">
-              <v-card-title class="text-h4 font-weight-bold pa-6">
-                <v-icon color="orange" class="mr-3">mdi-ticket-percent</v-icon>
-                优惠券
-              </v-card-title>
-              <v-card-text class="pa-6">
-                <v-alert
-                  type="info"
-                  variant="tonal"
-                  rounded="lg"
-                  class="mb-4"
-                >
-                  <v-icon slot="prepend">mdi-information</v-icon>
-                  优惠券功能正在开发中，敬请期待！
-                </v-alert>
-                <v-btn color="primary" @click="$router.push('/user')">
-                  <v-icon start>mdi-arrow-left</v-icon>
-                  返回用户中心
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </div>
-        `
-      }),
-      meta: { title: '优惠券 - 果润生活', requiresAuth: true }
-    },
-    // 404 页面
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: () => import('../views/NotFoundView.vue').catch(() => {
-        return {
-          template: `
-            <div style="text-align: center; padding: 50px;">
-              <h1>页面未找到</h1>
-              <p>抱歉，您访问的页面不存在</p>
-              <button @click="$router.push('/')">返回首页</button>
-            </div>
-          `
-        }
-      }),
-      meta: { title: '页面未找到 - 果润生活' }
-    }
-  ]
+  routes
 })
 
 // 路由守卫

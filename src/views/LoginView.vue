@@ -2,12 +2,11 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/api/auth'
+import { checkUserInfoCompleted } from '@/api/profile'
 import { AuthManager } from '@/utils/auth-manager'
-import { useWebSocketStore } from '@/stores/websocket'
 import AppNavigation from '@/components/AppNavigation.vue'
 
 const router = useRouter()
-const webSocketStore = useWebSocketStore()
 
 const formData = ref({
     email: '',
@@ -20,7 +19,6 @@ const loading = ref(false)
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
-const rememberPassword = ref(true) // 默认勾选记住密码
 
 const emailRules = [
     (v: string) => !!v || '邮箱不能为空',
@@ -36,35 +34,6 @@ const showMessage = (message: string, color: string = 'success') => {
     snackbarText.value = message
     snackbarColor.value = color
     snackbar.value = true
-}
-
-// 从localStorage恢复记住的账号密码
-const loadRememberedCredentials = () => {
-    if (localStorage.getItem('rememberPassword') === 'true') {
-        const savedEmail = localStorage.getItem('savedEmail')
-        const savedPassword = localStorage.getItem('savedPassword')
-
-        if (savedEmail) formData.value.email = savedEmail
-        if (savedPassword) formData.value.password = savedPassword
-        rememberPassword.value = true
-
-        console.log('已恢复记住的登录信息')
-    }
-}
-
-// 保存或清除记住的账号密码
-const handleRememberPassword = () => {
-    if (rememberPassword.value) {
-        localStorage.setItem('rememberPassword', 'true')
-        localStorage.setItem('savedEmail', formData.value.email)
-        localStorage.setItem('savedPassword', formData.value.password)
-        console.log('已保存登录信息到本地')
-    } else {
-        localStorage.removeItem('rememberPassword')
-        localStorage.removeItem('savedEmail')
-        localStorage.removeItem('savedPassword')
-        console.log('已清除记住的登录信息')
-    }
 }
 
 const handleLogin = async () => {
@@ -91,26 +60,57 @@ const handleLogin = async () => {
         console.log('登录响应:', response)
 
         if (response.code === 200) {
-            // 处理记住密码
-            handleRememberPassword()
-
             // 使用AuthManager保存JWT token
             AuthManager.saveToken(response.data, formData.value.email)
 
-            showMessage('登录成功！正在连接服务...', 'success')
+            showMessage('登录成功！正在检查用户信息...', 'success')
 
-            // 登录成功后初始化WebSocket
+            // 触发浏览器的密码保存提示
+            triggerPasswordSave()
+
+            // 登录成功后立即检查用户信息完善状态
             try {
-                console.log('🚀 登录成功，开始初始化WebSocket')
-                await webSocketStore.initialize()
+                console.log('🔍 开始检查用户信息完善状态...')
+                const userInfoResponse = await checkUserInfoCompleted()
+
+                console.log('🔍 详细响应分析:')
+                console.log('- 响应码:', userInfoResponse.code)
+                console.log('- 响应消息:', userInfoResponse.msg)
+                console.log('- 响应数据:', userInfoResponse.data)
+
+                // 修复：根据data字段的值判断
+                // userInfoResponse.data === "true" 表示已完善
+                // userInfoResponse.data === "false" 表示未完善
+                const isUserInfoCompleted = userInfoResponse.code === 200 && userInfoResponse.data === "true"
+
+                if (isUserInfoCompleted) {
+                    console.log('🎉 用户信息已完善，跳转到用户中心')
+                    // 用户信息已完善，跳转到用户中心
+                    setTimeout(() => {
+                        router.replace('/user')
+                    }, 1500)
+                } else {
+                    console.log('📝 用户信息未完善，跳转到资料完善页面')
+                    console.log('📝 状态详情: data =', userInfoResponse.data)
+                    // 用户信息未完善，跳转到资料完善页面
+                    showMessage('请先完善个人资料以获得更好的体验', 'info')
+                    setTimeout(() => {
+                        router.replace('/user/profile-wizard')
+                    }, 1500)
+                }
+
             } catch (error) {
-                console.error('❌ WebSocket初始化失败:', error)
+                console.error('❌ 用户信息完善状态检查失败:', error)
+                console.log('📝 检查失败，默认跳转到资料完善页面（安全策略）')
+                // 检查失败时，默认跳转到资料完善页面（安全起见）
+                showMessage('请完善个人资料以获得更好的体验', 'info')
+                setTimeout(() => {
+                    router.replace('/user/profile-wizard')
+                }, 1500)
             }
 
-            // 短暂延迟后跳转
-            setTimeout(() => {
-                router.replace('/user')
-            }, 1500)
+            
+
         } else {
             showMessage(response.msg || '登录失败', 'error')
         }
@@ -131,6 +131,51 @@ const handleLogin = async () => {
     }
 }
 
+// 触发浏览器密码保存提示
+const triggerPasswordSave = () => {
+    try {
+        // 创建一个隐藏的原生表单来触发浏览器的密码保存
+        const form = document.createElement('form')
+        form.style.display = 'none'
+        form.method = 'post'
+        form.action = window.location.href
+
+        // 创建用户名输入框
+        const usernameInput = document.createElement('input')
+        usernameInput.type = 'email'
+        usernameInput.name = 'username'
+        usernameInput.value = formData.value.email
+        usernameInput.autocomplete = 'username'
+
+        // 创建密码输入框
+        const passwordInput = document.createElement('input')
+        passwordInput.type = 'password'
+        passwordInput.name = 'password'
+        passwordInput.value = formData.value.password
+        passwordInput.autocomplete = 'current-password'
+
+        // 添加到表单
+        form.appendChild(usernameInput)
+        form.appendChild(passwordInput)
+
+        // 添加到页面
+        document.body.appendChild(form)
+
+        // 模拟表单提交来触发密码保存
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+        form.dispatchEvent(submitEvent)
+
+        // 清理
+        setTimeout(() => {
+            document.body.removeChild(form)
+        }, 100)
+
+        console.log('✅ 已触发浏览器密码保存提示')
+    } catch (error) {
+        console.warn('⚠️ 触发密码保存失败:', error)
+    }
+}
+
 const goToRegister = () => {
     router.push('/register')
 }
@@ -139,17 +184,20 @@ const goToForgotPassword = () => {
     router.push('/forgot-password')
 }
 
-// 页面加载时恢复记住的登录信息
+// 页面加载时的处理
 onMounted(() => {
-    loadRememberedCredentials()
-
     console.log('🔍 LoginView加载，检查登录状态')
-    AuthManager.debugStorage()
-
     if (AuthManager.isLoggedIn()) {
         console.log('✅ 已登录，重定向到用户中心')
         router.replace('/user')
+        return
     }
+
+    // 清除可能存在的localStorage密码数据，避免干扰浏览器自动填充
+    localStorage.removeItem('rememberPassword')
+    localStorage.removeItem('savedEmail')
+    localStorage.removeItem('savedPassword')
+    console.log('🧹 清除localStorage密码数据，使用浏览器原生密码管理')
 })
 </script>
 
@@ -174,7 +222,7 @@ onMounted(() => {
                         <!-- 邮箱输入 -->
                         <v-text-field v-model="formData.email" label="邮箱地址" prepend-inner-icon="mdi-email"
                             :rules="emailRules" variant="outlined" class="form-field" rounded="lg" clearable
-                            density="comfortable" autocomplete="email" name="email" type="email">
+                            density="comfortable" autocomplete="username email" name="email" type="email" id="email">
                         </v-text-field>
 
                         <!-- 密码输入 -->
@@ -182,15 +230,17 @@ onMounted(() => {
                             :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                             :type="showPassword ? 'text' : 'password'" :rules="passwordRules" variant="outlined"
                             class="form-field" rounded="lg" density="comfortable" autocomplete="current-password"
-                            name="password" @click:append-inner="showPassword = !showPassword">
+                            name="password" id="password" @click:append-inner="showPassword = !showPassword">
                         </v-text-field>
 
-                        <!-- 记住密码选项 -->
-                        <div class="remember-section">
-                            <v-checkbox v-model="rememberPassword" label="记住密码" color="primary" density="compact"
-                                hide-details>
-                            </v-checkbox>
+                        <!-- 移除记住密码选项 -->
+                        <div class="password-tips">
+                            <v-icon color="info" size="small" class="mr-1">mdi-information</v-icon>
+                            <span class="text-caption">浏览器会为您安全保存登录信息</span>
+                        </div>
 
+                        <!-- 忘记密码链接 -->
+                        <div class="forgot-password-section">
                             <v-btn color="primary" variant="text" size="small" class="forgot-password-link"
                                 @click="goToForgotPassword">
                                 忘记密码？
@@ -293,12 +343,18 @@ onMounted(() => {
     margin-bottom: 24px;
 }
 
-.remember-section {
-    margin-top: -8px;
-    margin-bottom: 24px;
+.password-tips {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    margin-bottom: 16px;
+}
+
+.forgot-password-section {
+    text-align: center;
+    margin-bottom: 24px;
 }
 
 .forgot-password-link {
