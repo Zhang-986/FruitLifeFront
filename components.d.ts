@@ -7,7 +7,6 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    AppHeader: typeof import('./src/components/AppHeader.vue')['default']
     AppNavigation: typeof import('./src/components/AppNavigation.vue')['default']
     AvatarSelector: typeof import('./src/components/AvatarSelector.vue')['default']
     FruitDetailDialog: typeof import('./src/components/FruitDetailDialog.vue')['default']
