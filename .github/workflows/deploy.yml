@@ -2,93 +2,33 @@ name: 🚀 部署到 GitHub Pages
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
-# 设置权限
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# 确保只有一个部署任务同时运行
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-# 环境变量
-env:
-  NODE_VERSION: '18'
-
 jobs:
-  # 构建任务
-  build:
-    name: 🏗️ 构建项目
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
     - name: 📥 检出代码
       uses: actions/checkout@v4
-
+    
     - name: 📦 设置 Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ env.NODE_VERSION }}
+        node-version: '18'
         cache: 'npm'
-
-    - name: 🔍 显示项目信息
-      run: |
-        echo "🎯 项目: 水果生活前端"
-        echo "🌟 Node.js: ${{ env.NODE_VERSION }}"
-        echo "📦 构建目标: GitHub Pages"
-
-    - name: 📦 安装依赖
-      run: |
-        echo "⏳ 安装依赖中..."
-        npm ci
-        echo "✅ 依赖安装完成"
-
-    - name: 🔧 代码检查 (可选)
-      run: |
-        echo "🔍 执行代码检查..."
-        npm run lint || echo "⚠️ 代码检查有警告，继续构建"
-
-    - name: 🏗️ 构建生产版本
-      run: |
-        echo "🔨 开始构建..."
-        npm run build
-        echo "✅ 构建完成"
-        
-        # 显示构建结果
-        echo "📦 构建产物:"
-        ls -la dist/
-        echo "📊 构建大小:"
-        du -sh dist/
-
-    - name: 🔧 配置 Pages
-      uses: actions/configure-pages@v4
-
-    - name: 📤 上传构建产物
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: ./dist
-
-  # 部署到 GitHub Pages
-  deploy:
-    name: 🌐 部署到 Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     
-    steps:
+    - name: 📋 安装依赖
+      run: npm ci
+    
+    - name: 🔧 构建项目
+      run: npm run build
+    
     - name: 🚀 部署到 GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
-
-    - name: 🎉 部署完成
-      run: |
-        echo "🎉 部署成功！"
-        echo "🌐 访问地址: ${{ steps.deployment.outputs.page_url }}"
-        echo "📝 访问你的水果生活应用吧！"
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+        # 强制推送，确保文件更新
+        force_orphan: true
