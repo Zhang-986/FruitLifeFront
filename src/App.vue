@@ -29,7 +29,7 @@ onMounted(() => {
 
 <style scoped>
 .fruit-life-app {
-  min-height: 100vh;
+  min-height: 1vh;
 }
 
 /* 全局水果主题样式 */

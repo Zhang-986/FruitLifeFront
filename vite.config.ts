@@ -2,84 +2,84 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
 import vuetify from 'vite-plugin-vuetify'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
-  // 判断是否为GitHub Pages构建
-  const isGitHubPages = process.env.GITHUB_ACTIONS === 'true'
-  
-  // GitHub Pages的仓库名称 - 根据你的用户名和仓库名修改
-  const repoName = 'FruitLifeFront'  // 改为你的实际仓库名
-  
-  return {
-    plugins: [
-      vue(),
-      vuetify({
-        autoImport: true,
-      }),
-      AutoImport({
-        imports: ['vue', 'vue-router'],
-        dts: true
-      }),
-      Components({
-        dts: true
-      })
-    ],
-    
-    // 🔧 GitHub Pages部署关键配置
-    base: isGitHubPages ? `/${repoName}/` : '/',
-    
-    resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url))
-      },
+export default defineConfig({
+  plugins: [
+    vue(),
+    vueDevTools(),
+    vuetify({
+      autoImport: true
+      // 移除可能冲突的styles配置
+    }),
+    AutoImport({
+      imports: ['vue', 'vue-router'],
+      dts: true
+    }),
+    Components({
+      dts: true
+    })
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     },
-    
-    // 🏗️ 生产构建优化
-    build: {
-      outDir: 'dist',
-      assetsDir: 'assets',
-      sourcemap: false,
-      minify: 'terser',
-      chunkSizeWarningLimit: 1000,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['vue', 'vue-router', 'pinia'],
-            vuetify: ['vuetify'],
-          }
+  },
+  // 优化构建配置
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'pinia'],
+          vuetify: ['vuetify'],
+          utils: ['axios']
         }
       }
     },
-    
-    // 🛠️ 开发服务器配置
-    server: {
-      open: true,
-      host: '0.0.0.0',
-      port: 5173,
-      hmr: {
-        overlay: true
-      },
-      watch: {
-        usePolling: true,
-        interval: 1000
-      },
-      proxy: {
-        '/api': {
-          target: 'http://localhost:8080',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '')
-        }
-      }
+    // 增加chunk大小警告阈值
+    chunkSizeWarningLimit: 1000
+  },
+  // 优化开发服务器配置
+  server: {
+    open: true,
+    host: '0.0.0.0',
+    port: 5173,
+    // 提高稳定性
+    hmr: {
+      overlay: true
     },
-    
-    // 🎯 环境变量配置
-    define: {
-      __VUE_OPTIONS_API__: false,
-      __VUE_PROD_DEVTOOLS__: false,
+    // 增加文件监听的稳定性
+    watch: {
+      usePolling: true,
+      interval: 1000
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('代理错误:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('发送请求到后端:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('收到后端响应:', proxyRes.statusCode, req.url);
+          });
+        },
+      }
     }
+  },
+  // 优化依赖预构建
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', 'vuetify', 'axios'],
+    exclude: ['vue-demi']
   }
 })

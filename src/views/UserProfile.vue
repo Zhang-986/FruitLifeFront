@@ -134,43 +134,7 @@
                                         </v-col>
                                     </v-row>
 
-                                    <!-- 新增：管理员入口区域 -->
-                                    <div v-if="authStore.isAdmin" class="admin-section mt-6">
-                                        <v-divider class="mb-4"></v-divider>
-                                        <div class="d-flex align-center justify-space-between mb-4">
-                                            <h3 class="section-title">
-                                                <v-icon color="error" class="mr-2">mdi-shield-crown</v-icon>
-                                                管理员功能
-                                            </h3>
-                                            <v-chip color="error" variant="elevated" size="small">
-                                                <v-icon start size="small">mdi-crown</v-icon>
-                                                管理员权限
-                                            </v-chip>
-                                        </div>
-
-                                        <v-card class="admin-access-card" variant="outlined" rounded="lg">
-                                            <v-card-text class="pa-4">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="admin-icon-container">
-                                                        <v-avatar size="60" color="error">
-                                                            <v-icon color="white" size="30">mdi-fruit-cherries</v-icon>
-                                                        </v-avatar>
-                                                    </div>
-                                                    <div class="admin-info flex-grow-1 ml-4">
-                                                        <h4 class="admin-title">水果管理系统</h4>
-                                                        <p class="admin-description text-medium-emphasis">
-                                                            管理水果信息，包含详细属性和生活化特性
-                                                        </p>
-                                                    </div>
-                                                    <v-btn color="error" variant="elevated" size="large"
-                                                        @click="goToAdminPanel" class="admin-btn">
-                                                        <v-icon start>mdi-cog</v-icon>
-                                                        进入管理
-                                                    </v-btn>
-                                                </div>
-                                            </v-card-text>
-                                        </v-card>
-                                    </div>
+                                    
                                 </div>
                             </v-card-text>
                         </v-card>
