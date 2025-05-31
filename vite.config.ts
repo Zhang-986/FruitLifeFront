@@ -24,6 +24,7 @@ export default defineConfig({
       dts: true
     })
   ],
+  base: '/FruitLifeFront/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -31,17 +32,10 @@ export default defineConfig({
   },
   // 优化构建配置
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router', 'pinia'],
-          vuetify: ['vuetify'],
-          utils: ['axios']
-        }
-      }
-    },
-    // 增加chunk大小警告阈值
-    chunkSizeWarningLimit: 1000
+    outDir: 'dist',
+    assetsDir: 'assets',
+    // 确保资源内联阈值合适
+    assetsInlineLimit: 4096
   },
   // 优化开发服务器配置
   server: {
