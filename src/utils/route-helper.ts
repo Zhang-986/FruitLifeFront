@@ -76,6 +76,6 @@ export class RouteHelper {
 export function createRetryableImport(importPath: string) {
   return () => {
     const helper = new RouteHelper(null as any) // 这里不需要router实例
-    return helper.retryDynamicImport(() => import(importPath))
+    return helper.retryDynamicImport(() => import(/* @vite-ignore */ importPath));
   }
 }

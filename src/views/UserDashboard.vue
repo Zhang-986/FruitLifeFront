@@ -27,14 +27,85 @@
                                     <div class="user-basic-info">
                                         <h2 class="user-name text-white">{{ displayName }}</h2>
                                         <p class="user-email text-white opacity-90">{{ userEmail }}</p>
-                                        <v-chip :color="userCompletionStatus.color" variant="elevated" size="small"
-                                            class="mt-2">
-                                            <v-icon start size="small">{{ userCompletionStatus.icon }}</v-icon>
-                                            {{ userCompletionStatus.text }}
-                                        </v-chip>
+                                        <div class="d-flex align-center gap-2 mt-2">
+                                            <v-chip :color="userCompletionStatus.color" variant="elevated" size="small">
+                                                <v-icon start size="small">{{ userCompletionStatus.icon }}</v-icon>
+                                                {{ userCompletionStatus.text }}
+                                            </v-chip>
+                                            <!-- 管理员徽章和入口 -->
+                                            <v-chip v-if="authStore.isAdmin" color="deep-purple" variant="elevated"
+                                                size="small" @click="goToAdminPanel" class="admin-entry-chip">
+                                                <v-icon start size="small">mdi-crown</v-icon>
+                                                管理员
+                                            </v-chip>
+                                        </div>
+                                    </div>
+                                    <!-- 管理员快速入口按钮 -->
+                                    <div v-if="authStore.isAdmin" class="admin-quick-entry">
+                                        <v-btn color="deep-purple" variant="elevated" size="large"
+                                            @click="goToAdminPanel" class="admin-dashboard-btn">
+                                            <v-icon start>mdi-cog</v-icon>
+                                            管理后台
+                                        </v-btn>
                                     </div>
                                 </div>
                             </div>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
+                <!-- 管理员专属统计卡片 -->
+                <v-row v-if="authStore.isAdmin" class="mb-6">
+                    <v-col cols="12">
+                        <v-card class="admin-stats-card fruit-card" elevation="4" rounded="xl">
+                            <v-card-title class="d-flex align-center">
+                                <v-icon color="deep-purple" class="mr-2">mdi-shield-crown</v-icon>
+                                <span class="text-deep-purple font-weight-bold">管理员面板</span>
+                                <v-spacer></v-spacer>
+                                <v-chip color="deep-purple" size="small" variant="flat">
+                                    管理员权限
+                                </v-chip>
+                            </v-card-title>
+                            <v-card-text class="pa-4">
+                                <v-row>
+                                    <v-col cols="6" sm="3">
+                                        <div class="admin-stat-item text-center">
+                                            <v-icon size="36" color="primary" class="mb-2">mdi-fruit-cherries</v-icon>
+                                            <div class="text-h6 font-weight-bold">23</div>
+                                            <div class="text-caption text-medium-emphasis">水果种类</div>
+                                        </div>
+                                    </v-col>
+                                    <v-col cols="6" sm="3">
+                                        <div class="admin-stat-item text-center">
+                                            <v-icon size="36" color="success" class="mb-2">mdi-account-group</v-icon>
+                                            <div class="text-h6 font-weight-bold">156</div>
+                                            <div class="text-caption text-medium-emphasis">注册用户</div>
+                                        </div>
+                                    </v-col>
+                                    <v-col cols="6" sm="3">
+                                        <div class="admin-stat-item text-center">
+                                            <v-icon size="36" color="warning" class="mb-2">mdi-package-variant</v-icon>
+                                            <div class="text-h6 font-weight-bold">89</div>
+                                            <div class="text-caption text-medium-emphasis">待处理订单</div>
+                                        </div>
+                                    </v-col>
+                                    <v-col cols="6" sm="3">
+                                        <div class="admin-stat-item text-center">
+                                            <v-icon size="36" color="info" class="mb-2">mdi-chart-line</v-icon>
+                                            <div class="text-h6 font-weight-bold">¥12.5k</div>
+                                            <div class="text-caption text-medium-emphasis">今日销售额</div>
+                                        </div>
+                                    </v-col>
+                                </v-row>
+                                <v-divider class="my-4"></v-divider>
+                                <div class="d-flex justify-center">
+                                    <v-btn color="deep-purple" variant="elevated" size="large" @click="goToAdminPanel"
+                                        class="admin-main-btn">
+                                        <v-icon start>mdi-fruit-cherries</v-icon>
+                                        进入水果管理系统
+                                    </v-btn>
+                                </div>
+                            </v-card-text>
                         </v-card>
                     </v-col>
                 </v-row>
@@ -89,7 +160,8 @@
                             </v-card-title>
                             <v-card-text class="pa-6">
                                 <v-row>
-                                    <v-col v-for="action in quickActions" :key="action.title" cols="6" sm="4" md="3">
+                                    <v-col v-for="action in filteredQuickActions" :key="action.title" cols="6" sm="4"
+                                        md="3">
                                         <v-card class="action-card fruit-card" variant="outlined" rounded="lg"
                                             @click="handleQuickAction(action)" hover>
                                             <v-card-text class="pa-4 text-center">
@@ -201,11 +273,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAvatarStore } from '@/stores/avatar'
-import { getUserInfo, checkUserInfoCompleted, type UserInfoVo } from '@/api/profile'
+import { useAvatarStore, type AvatarConfig } from '@/stores/avatar'
 import AppNavigation from '@/components/AppNavigation.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import AvatarSelector from '@/components/AvatarSelector.vue'
@@ -215,24 +286,77 @@ const authStore = useAuthStore()
 const avatarStore = useAvatarStore()
 
 // 响应式数据
-const userInfo = ref<UserInfoVo | null>(null)
 const loading = ref(false)
+const showAvatarSelector = ref(false)
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
 
-// 头像相关状态 - 使用全局状态
-const showAvatarSelector = ref(false)
+// 使用缓存的用户信息，避免重复请求
+const userInfo = computed(() => authStore.userProfile)
+const isLoggedIn = computed(() => authStore.isLoggedIn)
+
+// 获取用户头像信息
+const getUserAvatarInfo = () => {
+    const email = userInfo.value?.email
+    const nickname = userInfo.value?.nickname || email?.split('@')[0] || '用户'
+
+    return {
+        email: email,
+        nickname: nickname,
+        id: userInfo.value?.id
+    }
+}
+
+// 方法
+const showMessage = (message: string, color: string = 'success') => {
+    snackbarText.value = message
+    snackbarColor.value = color
+    snackbar.value = true
+}
+
+// 头像编辑处理
+const handleAvatarEdit = () => {
+    console.log('编辑头像')
+    showAvatarSelector.value = true
+}
+
+// 处理头像选择 - 用户在选择器中选择头像后
+const handleAvatarSelect = (config: AvatarConfig) => {
+    console.log('✅ 用户选择了新头像:', config)
+
+    // 更新全局头像配置
+    avatarStore.updateAvatar(config)
+
+    showMessage('头像已更新', 'success')
+
+    // TODO: 这里可以保存头像配置到后端
+    console.log('💾 保存头像配置到后端:', config)
+
+    // 关闭选择器
+    showAvatarSelector.value = false
+}
 
 // 快捷操作数据
-const quickActions = ref([
+const quickActions = ref([  
     { title: '个人资料', icon: 'mdi-account', color: 'primary', action: 'profile' },
     { title: '浏览商品', icon: 'mdi-storefront', color: 'success', action: 'browse' },
     { title: '我的订单', icon: 'mdi-package-variant', color: 'info', action: 'orders' },
     { title: '购物车', icon: 'mdi-cart', color: 'error', action: 'cart' },
     { title: '我的收藏', icon: 'mdi-heart', color: 'pink', action: 'favorites' },
-    { title: '客服中心', icon: 'mdi-help-circle', color: 'orange', action: 'support' }
+    { title: '客服中心', icon: 'mdi-help-circle', color: 'orange', action: 'support' },
+    { title: '管理后台', icon: 'mdi-cog', color: 'deep-purple', action: 'admin', adminOnly: true }
 ])
+
+// 计算属性：过滤快捷操作（管理员可以看到管理后台选项）
+const filteredQuickActions = computed(() => {
+    return quickActions.value.filter(action => {
+        if (action.adminOnly) {
+            return authStore.isAdmin
+        }
+        return true
+    })
+})
 
 // 最近订单数据
 const recentOrders = ref([
@@ -347,44 +471,9 @@ const currentAvatarType = computed(() => {
     return avatarStore.currentAvatarType
 })
 
-// 方法
-const showMessage = (message: string, color: string = 'success') => {
-    snackbarText.value = message
-    snackbarColor.value = color
-    snackbar.value = true
-}
-
-// 获取用户头像信息 - 修复逻辑
-const getUserAvatarInfo = () => {
-    const email = userEmail.value
-    const nickname = displayName.value
-
-    return {
-        // 只有当邮箱不是"未知邮箱"时才传递
-        email: email !== '未知邮箱' ? email : undefined,
-        // 优先使用个人资料昵称
-        nickname: userInfo.value?.nickname || nickname,
-        id: userInfo.value?.id
-    }
-}
-
-// 处理头像编辑 - 点击头像时打开选择器
-const handleAvatarEdit = () => {
-    console.log('🎨 用户点击头像，打开头像选择器')
-    showAvatarSelector.value = true
-}
-
-// 处理头像选择 - 用户在选择器中选择头像后
-const handleAvatarSelect = (config: AvatarConfig) => {
-    console.log('✅ 用户选择了新头像:', config)
-
-    // 更新全局头像配置
-    avatarStore.updateAvatar(config)
-
-    showMessage('头像已更新', 'success')
-
-    // TODO: 这里可以保存头像配置到后端
-    console.log('💾 保存头像配置到后端:', config)
+// 新增方法：进入管理员面板
+const goToAdminPanel = () => {
+    router.push('/zzk')
 }
 
 // 快捷操作处理
@@ -408,6 +497,9 @@ const handleQuickAction = (action: any) => {
         case 'support':
             router.push('/support')
             break
+        case 'admin':
+            goToAdminPanel()
+            break
         default:
             console.log('未知操作:', action)
     }
@@ -421,72 +513,30 @@ const goToProducts = () => {
     router.push('/products')
 }
 
-const loadUserInfo = async () => {
-    loading.value = true
-    try {
-        console.log('🔍 用户中心开始获取用户信息...')
-        const response = await getUserInfo()
 
-        if (response.code === 200 && response.data) {
-            userInfo.value = response.data
-            console.log('✅ 用户中心用户信息加载成功:', {
-                nickname: userInfo.value.nickname,
-                email: userInfo.value.email,
-                isCompleted: userInfo.value.isCompleted
-            })
-        } else {
-            showMessage(response.msg || '获取用户信息失败', 'error')
-        }
-    } catch (error: any) {
-        console.error('❌ 获取用户信息失败:', error)
-
-        let message = '获取用户信息失败，请稍后重试'
-        if (error.name === 'BusinessError') {
-            message = error.message
-        }
-
-        showMessage(message, 'error')
-    } finally {
-        loading.value = false
-    }
-}
-
-// 页面加载时获取用户信息
+// 页面挂载时检查用户信息
 onMounted(async () => {
-    if (authStore.isLoggedIn) {
-        // 初始化头像配置
-        avatarStore.initializeAvatar()
+    console.log('🔍 UserDashboard 页面加载')
 
-        await loadUserInfo()
-
-        // 检查用户信息完善状态
-        try {
-            const response = await checkUserInfoCompleted()
-            console.log('🔍 完善状态检查响应:', response)
-
-            // 根据后端返回的字符串判断是否完善
-            const isUserInfoCompleted = response.code === 200 && response.data === "true"
-
-            console.log('📊 用户信息完善状态:', isUserInfoCompleted)
-
-            if (!isUserInfoCompleted && userInfo.value && !userInfo.value.isCompleted) {
-                showMessage('建议完善个人资料以获得更好的体验', 'info')
-            }
-        } catch (error) {
-            console.error('❌ 检查用户信息完善状态失败:', error)
-            // 检查失败时不显示错误提示，静默处理
-        }
-    } else {
+    if (!isLoggedIn.value) {
+        console.log('❌ 未登录，跳转到登录页')
         router.replace('/login')
+        return
+    }
+
+    // 如果用户信息未加载，则加载，避免重复请求
+    if (!authStore.userProfileLoaded) {
+        console.log('📋 UserDashboard: 用户信息未加载，开始加载')
+        await authStore.loadUserProfile()
+    } else {
+        console.log('📋 UserDashboard: 使用已缓存的用户信息')
+    }
+
+    // 检查管理员权限
+    if (!authStore.adminStatusChecked && userInfo.value?.email) {
+        await authStore.checkAdmin(userInfo.value.email)
     }
 })
-
-interface AvatarConfig {
-    type: 'letter' | 'emoji' | 'fruit' | 'color'
-    fruit?: string
-    emoji?: string
-    color?: string
-}
 </script>
 
 <style scoped>
@@ -608,6 +658,64 @@ interface AvatarConfig {
     border-color: rgba(76, 175, 80, 0.5) !important;
 }
 
+/* 管理员入口样式 */
+.admin-entry-chip {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.admin-entry-chip:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(103, 58, 183, 0.4);
+}
+
+.admin-quick-entry {
+    flex-shrink: 0;
+}
+
+.admin-dashboard-btn {
+    background: linear-gradient(135deg, #673AB7 0%, #9C27B0 100%) !important;
+    box-shadow: 0 4px 15px rgba(103, 58, 183, 0.4) !important;
+    transition: all 0.3s ease;
+}
+
+.admin-dashboard-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(103, 58, 183, 0.5) !important;
+}
+
+/* 管理员统计卡片 */
+.admin-stats-card {
+    background: linear-gradient(135deg, rgba(103, 58, 183, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%);
+    border: 2px solid rgba(103, 58, 183, 0.1);
+}
+
+.admin-stat-item {
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+}
+
+.admin-stat-item:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.admin-main-btn {
+    background: linear-gradient(135deg, #673AB7 0%, #9C27B0 100%) !important;
+    box-shadow: 0 4px 15px rgba(103, 58, 183, 0.4) !important;
+    transition: all 0.3s ease;
+    padding: 12px 32px !important;
+    font-size: 1.1rem !important;
+}
+
+.admin-main-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(103, 58, 183, 0.6) !important;
+}
+
 /* 移动端适配 */
 @media (max-width: 600px) {
     .dashboard-content {
@@ -622,6 +730,20 @@ interface AvatarConfig {
 
     .avatar-wrapper {
         align-self: center;
+    }
+
+    .admin-quick-entry {
+        width: 100%;
+        margin-top: 16px;
+    }
+
+    .admin-dashboard-btn {
+        width: 100%;
+    }
+
+    .admin-main-btn {
+        width: 100%;
+        font-size: 1rem !important;
     }
 }
 

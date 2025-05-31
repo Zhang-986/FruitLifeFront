@@ -246,7 +246,6 @@ import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAvatarStore } from '@/stores/avatar'
-import { getUserInfo, checkUserInfoCompleted, type UserInfoVo } from '@/api/profile'
 import UserAvatar from './UserAvatar.vue'
 
 const router = useRouter()
@@ -271,7 +270,6 @@ const showSearch = ref(false)
 const searchQuery = ref('')
 const cartItemCount = ref(3) // 模拟购物车数量
 const userMenu = ref(false)
-const userInfo = ref<UserInfoVo | null>(null)
 
 // 主要菜单项
 const mainMenuItems = ref([
@@ -310,8 +308,12 @@ const categories = ref([
 
 // 计算属性
 const isLoggedIn = computed(() => authStore.isLoggedIn)
+
+// 使用缓存的用户详细信息，避免重复请求
+const userInfo = computed(() => authStore.userProfile)
+
 const displayName = computed(() => {
-    // 优先使用个人资料中的昵称
+    // 优先使用缓存的用户详细信息中的昵称
     if (userInfo.value?.nickname) {
         return userInfo.value.nickname
     }
@@ -327,81 +329,32 @@ const displayName = computed(() => {
     return '用户'
 })
 
-// 获取用户邮箱 - 优先使用个人资料
+// 获取用户邮箱 - 优先使用缓存的用户信息
 const getUserEmail = () => {
-    // 如果有个人资料，且包含邮箱，使用个人资料中的邮箱
     if (userInfo.value?.email) {
         return userInfo.value.email
     }
-
-    // 否则使用认证信息中的邮箱
     const authInfo = authStore.getUserInfo()
     if (authInfo?.email) {
         return authInfo.email
     }
-
     return '未知邮箱'
 }
 
-// 获取用户头像信息 - 修复逻辑
+// 获取用户头像信息 - 使用缓存的用户信息
 const getUserAvatarInfo = () => {
     const email = getUserEmail()
     const nickname = displayName.value
 
     return {
-        // 只有当邮箱不是"未知邮箱"时才传递
         email: email !== '未知邮箱' ? email : undefined,
-        // 优先使用个人资料昵称，避免使用邮箱前缀作为昵称
         nickname: userInfo.value?.nickname || nickname,
         id: userInfo.value?.id
     }
 }
 
-// 用户完善状态 - 基于实际加载的用户信息
-const userCompletionStatus = computed(() => {
-    if (!isLoggedIn.value) {
-        return {
-            color: 'grey',
-            icon: 'mdi-account-circle-outline',
-            text: '未登录'
-        }
-    }
-
-    if (!userInfo.value) {
-        return {
-            color: 'info',
-            icon: 'mdi-loading',
-            text: '加载中...'
-        }
-    }
-
-    // 检查是否完善了个人资料
-    const hasBasicInfo = userInfo.value.nickname &&
-        userInfo.value.age &&
-        userInfo.value.gender &&
-        userInfo.value.heightCm &&
-        userInfo.value.weightKg
-
-    if (userInfo.value.isCompleted && hasBasicInfo) {
-        return {
-            color: 'success',
-            icon: 'mdi-check-circle',
-            text: '资料完整'
-        }
-    } else if (userInfo.value.nickname) {
-        return {
-            color: 'warning',
-            icon: 'mdi-account-edit',
-            text: '部分完善'
-        }
-    } else {
-        return {
-            color: 'error',
-            icon: 'mdi-alert-circle',
-            text: '待完善'
-        }
-    }
-})
+// 用户完善状态 - 使用 store 中的计算属性
+const userCompletionStatus = computed(() => authStore.userCompletionStatus)
 
 // 已登录用户菜单项
 const loggedInMenuItems = computed(() => [
@@ -606,48 +559,20 @@ const handleUserAction = () => {
     }
 }
 
-// 加载用户信息 - 增强错误处理
-const loadUserInfo = async () => {
-    if (!isLoggedIn.value) {
-        userInfo.value = null
-        return
-    }
-
-    try {
-        console.log('🔍 导航栏开始加载用户信息')
-        const response = await getUserInfo()
-
-        if (response.code === 200 && response.data) {
-            userInfo.value = response.data
-            console.log('✅ 导航栏用户信息加载成功:', {
-                nickname: userInfo.value.nickname,
-                email: userInfo.value.email,
-                isCompleted: userInfo.value.isCompleted
-            })
-        } else {
-            console.warn('⚠️ 导航栏获取用户信息返回异常:', response)
-            userInfo.value = null
-        }
-    } catch (error) {
-        console.error('❌ 导航栏加载用户信息失败:', error)
-        // 静默处理错误，不影响导航功能
-        userInfo.value = null
-    }
-}
-
 // 监听登录状态变化
 watch(isLoggedIn, async (newValue, oldValue) => {
-    console.log('🔄 导航栏监听到登录状态变化:', { from: oldValue, to: newValue })
-
     if (newValue) {
-        // 登录时初始化头像配置和加载用户信息
-        await avatarStore.initializeAvatar()  // 确保头像配置被正确加载
-        await loadUserInfo()
+        await avatarStore.initializeAvatar()
+
+        if (!authStore.userProfileLoaded) {
+            await authStore.loadUserProfile()
+        }
+
+        if (!authStore.adminStatusChecked && userInfo.value?.email) {
+            await authStore.checkAdmin(userInfo.value.email)
+        }
     } else {
-        // 登出时清除头像配置和用户信息
         avatarStore.clearAvatar()
-        userInfo.value = null
-        console.log('🗑️ 导航栏已清除用户信息')
     }
 }, { immediate: true })
 </script>

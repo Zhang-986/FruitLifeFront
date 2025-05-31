@@ -213,6 +213,16 @@ const routes = [
     }),
     meta: { title: '优惠券 - 果润生活', requiresAuth: true }
   },
+  // 新增：水果管理页面（zzk路由）
+  {
+    path: '/zzk',
+    name: 'ZzkAdmin',
+    component: () => import('@/views/ZzkAdmin.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '水果管理系统'
+    }
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
