@@ -5,8 +5,10 @@ import { login } from '@/api/auth'
 import { checkUserInfoCompleted } from '@/api/profile'
 import { AuthManager } from '@/utils/auth-manager'
 import AppNavigation from '@/components/AppNavigation.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const formData = ref({
     email: '',
@@ -84,32 +86,35 @@ const handleLogin = async () => {
                 const isUserInfoCompleted = userInfoResponse.code === 200 && userInfoResponse.data === "true"
 
                 if (isUserInfoCompleted) {
-                    console.log('🎉 用户信息已完善，跳转到用户中心')
+                    console.log('🎉 放心使用')
                     // 用户信息已完善，跳转到用户中心
-                    setTimeout(() => {
-                        router.replace('/user')
-                    }, 1500)
                 } else {
                     console.log('📝 用户信息未完善，跳转到资料完善页面')
                     console.log('📝 状态详情: data =', userInfoResponse.data)
                     // 用户信息未完善，跳转到资料完善页面
-                    showMessage('请先完善个人资料以获得更好的体验', 'info')
+                    setTimeout(() => {
+                        showMessage('请先完善个人资料以获得更好的体验', 'info')
+                    }, 500);
                     setTimeout(() => {
                         router.replace('/user/profile-wizard')
-                    }, 1500)
+                    }, 2000)
                 }
 
             } catch (error) {
                 console.error('❌ 用户信息完善状态检查失败:', error)
                 console.log('📝 检查失败，默认跳转到资料完善页面（安全策略）')
                 // 检查失败时，默认跳转到资料完善页面（安全起见）
-                showMessage('请完善个人资料以获得更好的体验', 'info')
-                setTimeout(() => {
-                    router.replace('/user/profile-wizard')
-                }, 1500)
+               setTimeout(() => {
+                        showMessage('请先完善个人资料以获得更好的体验', 'info')
+                    }, 500);
+                    setTimeout(() => {
+                        router.replace('/user/profile-wizard')
+                    }, 2000)
             }
 
-            
+            // 登录成功后，导航到主页
+            router.push('/')
+
 
         } else {
             showMessage(response.msg || '登录失败', 'error')

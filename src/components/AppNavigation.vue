@@ -34,8 +34,8 @@
                         <v-btn icon color="transparent" class="ml-2 user-avatar-btn" v-bind="props"
                             :class="{ 'avatar-active': userMenu }">
                             <UserAvatar v-if="isLoggedIn" :user="getUserAvatarInfo()" :size="32" clickable />
-                            <v-avatar v-else size="32" color="grey-lighten-2">
-                                <v-icon size="20" color="grey-darken-2">
+                            <v-avatar v-else size="32" color="green-lighten-2">
+                                <v-icon size="20" color="green-darken-2">
                                     mdi-account-circle-outline
                                 </v-icon>
                             </v-avatar>
@@ -274,7 +274,7 @@ const userMenu = ref(false)
 // 主要菜单项
 const mainMenuItems = ref([
     { title: '首页', icon: 'mdi-home', to: '/' },
-    { title: '商品列表', icon: 'mdi-storefront', to: '/products' },
+    { title: '水果列表', icon: 'mdi-fruit-cherries', to: '/products' }, // 更新图标
     { title: '特价促销', icon: 'mdi-tag-heart', to: '/promotions' },
     { title: '关于我们', icon: 'mdi-information', to: '/about' }
 ])
@@ -397,8 +397,8 @@ const loggedInMenuItems = computed(() => [
 // 游客菜单项
 const guestMenuItems = ref([
     {
-        title: '浏览商品',
-        icon: 'mdi-storefront',
+        title: '浏览水果',
+        icon: 'mdi-fruit-cherries', // 更新图标
         action: 'products'
     },
     {
@@ -467,10 +467,17 @@ const toggleSearch = () => {
 
 const handleSearch = () => {
     if (searchQuery.value.trim()) {
-        console.log('搜索:', searchQuery.value)
+        console.log('🔍 导航栏搜索:', searchQuery.value)
         showSearch.value = false
-        // TODO: 实现搜索功能
-        router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+
+        // 跳转到水果列表页面并携带搜索参数
+        router.push({
+            path: '/products',
+            query: { q: searchQuery.value.trim() }
+        })
+
+        // 清空搜索框
+        searchQuery.value = ''
     }
 }
 
@@ -485,8 +492,11 @@ const goToCart = () => {
 const handleCategoryClick = (category: any) => {
     closeDrawer()
     console.log('点击分类:', category.name)
-    // TODO: 实现分类筛选
-    router.push(`/products?category=${encodeURIComponent(category.name)}`)
+    // 跳转到水果列表页面并携带分类参数
+    router.push({
+        path: '/products',
+        query: { category: category.name }
+    })
 }
 
 const handleLogout = async () => {
@@ -520,7 +530,7 @@ const handleMenuClick = (item: any) => {
             router.push('/user')
             break
         case 'profile':
-            router.push('/user/profile') // 更新链接
+            router.push('/user/profile')
             break
         case 'orders':
             router.push('/user/orders')
@@ -535,7 +545,7 @@ const handleMenuClick = (item: any) => {
             router.push('/user/settings')
             break
         case 'products':
-            router.push('/products')
+            router.push('/products') // 确保跳转到正确的路径
             break
         case 'promotions':
             router.push('/promotions')

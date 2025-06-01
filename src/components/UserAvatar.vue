@@ -165,7 +165,7 @@ const colorOptions = ref([
 
 // 计算属性
 const displayName = computed(() => {
-    return props.user?.nickname || props.user?.email?.split('@')[0] || '用户'
+    return props.user?.nickname || props.user?.email?.split('@')[0] || 'Y'
 })
 
 const avatarColor = computed(() => {
@@ -203,7 +203,7 @@ const finalEmojiAvatar = computed(() => {
 
 const avatarText = computed(() => {
     const name = displayName.value
-    return name ? name.charAt(0).toUpperCase() : '用'
+    return name ? name.charAt(0).toUpperCase() : 'You'
 })
 
 const emojiSize = computed(() => {

@@ -11,6 +11,12 @@ const routes = [
     meta: { title: '首页 - 果润生活', requiresAuth: false }
   },
   {
+    path: '/products',
+    name: 'products',
+    component: createRetryableImport('../views/ProductsView.vue'),
+    meta: { title: '水果列表 - 果润生活', requiresAuth: false }
+  },
+  {
     path: '/about',
     name: 'about',
     component: createRetryableImport('../views/AboutView.vue'),

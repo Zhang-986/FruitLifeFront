@@ -1,58 +1,55 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import vuetify from './plugins/vuetify'
-import router from './router'
+import { createVuetify } from 'vuetify'
 import App from './App.vue'
-import './styles/main.scss'
-import { requestInterceptor } from '@/utils/request-interceptor'
-import { AuthManager } from '@/utils/auth-manager'
-import { useAuthStore } from '@/stores/auth'
-import { useAvatarStore } from '@/stores/avatar'
+import router from './router'
 
+// Vuetify 样式
+import 'vuetify/styles'
+// Material Design Icons
+import '@mdi/font/css/materialdesignicons.css'
+
+// 创建应用实例
 const app = createApp(App)
 
-// 全局错误处理
-app.config.errorHandler = (err, vm, info) => {
-  console.error('Vue全局错误:', err, info)
-  
-  // 如果是动态导入错误，尝试重新加载页面
-  if (err instanceof Error && err.message.includes('Failed to fetch dynamically imported module')) {
-    console.warn('检测到动态导入失败，将重新加载页面')
-    setTimeout(() => {
-      window.location.reload()
-    }, 1000)
-  }
-}
+// 创建 Pinia store
+const pinia = createPinia()
 
-// 全局未捕获的Promise错误
-window.addEventListener('unhandledrejection', event => {
-  console.error('未捕获的Promise错误:', event.reason)
-  
-  if (event.reason?.message?.includes('Failed to fetch dynamically imported module')) {
-    console.warn('检测到动态导入Promise错误')
-    event.preventDefault() // 阻止默认的错误处理
-  }
+// 创建 Vuetify 实例 - 恢复你的绿色主题
+const vuetify = createVuetify({
+    theme: {
+        defaultTheme: 'light',
+        themes: {
+            light: {
+                colors: {
+                    primary: '#4CAF50',     // 绿色主题
+                    secondary: '#8BC34A',
+                    accent: '#CDDC39',
+                    error: '#F44336',
+                    warning: '#FF9800',
+                    info: '#2196F3',
+                    success: '#4CAF50'
+                }
+            }
+        }
+    },
+    icons: {
+        defaultSet: 'mdi'
+    }
 })
 
-const pinia = createPinia()
+// 使用插件
 app.use(pinia)
 app.use(router)
 app.use(vuetify)
 
-// 初始化请求拦截器
-if (import.meta.env.DEV) {
-  requestInterceptor.initialize().then(() => {
-    console.log('🎯 应用已启动，IP拦截器已就绪')
-  })
-}
-
+// 挂载应用
 app.mount('#app')
 
-// 应用挂载后初始化stores
-const authStore = useAuthStore()
-const avatarStore = useAvatarStore()
-
-authStore.initializeAuth()
-avatarStore.initializeAvatar()
-
-console.log('🚀 水果生活前端应用已启动')
+// 开发环境调试信息
+if (import.meta.env.DEV) {
+    console.log('🌱 开发环境已启动')
+    console.log('📱 水果生活前端应用已加载')
+    console.log('🧹 生产构建优化：开发工具已清理')
+    console.log('🍃 绿色水果主题已恢复')
+}

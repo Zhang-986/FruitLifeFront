@@ -2,6 +2,13 @@
     <div class="admin-container">
         <!-- 管理员头部 -->
         <v-card class="admin-header" elevation="0" rounded="0">
+            <!-- 返回按钮 -->
+            <div class="header-navigation">
+                <v-btn icon variant="text" @click="goBack" class="back-btn">
+                    <v-icon color="white" size="large">mdi-arrow-left</v-icon>
+                </v-btn>
+            </div>
+
             <v-card-title class="text-center text-white">
                 <v-icon color="white" class="mr-3" size="large">mdi-shield-crown</v-icon>
                 <span class="text-h4 font-weight-bold">水果管理后台</span>
@@ -189,9 +196,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getFruits, deleteFruit, type Fruit, type PageRequestDTO, type PageInfo } from '@/api/fruit'
+import { useRouter } from 'vue-router'
+import { getFruits, getFruitByName, deleteFruit, type Fruit, type PageRequestDTO, type PageInfo } from '@/api/fruit'
 import FruitEditDialog from '@/components/FruitEditDialog.vue'
 import FruitDetailDialog from '@/components/FruitDetailDialog.vue'
+
+const router = useRouter()
 
 // 响应式数据
 const loading = ref(false)
@@ -231,19 +241,81 @@ const isEdit = ref(false)
 const loadFruits = async () => {
     loading.value = true
     try {
-        const params: PageRequestDTO = {
-            pageNum: pagination.value.page,
-            pageSize: pagination.value.pageSize,
-            ...(searchKeyword.value && { keyword: searchKeyword.value })
-        }
+        // 如果有搜索关键词，使用名称查询单个水果
+        if (searchKeyword.value && searchKeyword.value.trim()) {
+            console.log('🔍 按名称搜索水果:', searchKeyword.value.trim())
+            console.log('📍 请求接口: GET /api/fruit/getFruitByName')
 
-        const response = await getFruits(params)
-        if (response.code === 200 && response.data) {
-            fruits.value = response.data.list || []
-            pageInfo.value = response.data
+            const response = await getFruitByName(searchKeyword.value.trim())
+
+            console.log('📨 按名称查询响应:', response)
+
+            if (response.code === 200 && response.data) {
+                // 单个水果结果包装成数组显示
+                fruits.value = [response.data]
+
+                // 更新分页信息为单条记录
+                pageInfo.value = {
+                    pageNum: 1,
+                    pageSize: 1,
+                    total: 1,
+                    pages: 1,
+                    list: [response.data],
+                    hasNextPage: false,
+                    hasPreviousPage: false
+                }
+
+                console.log('✅ 找到水果:', response.data.name)
+                showMessage(`找到水果：${response.data.name}`, 'success')
+            } else {
+                // 没找到水果
+                fruits.value = []
+                pageInfo.value = {
+                    pageNum: 1,
+                    pageSize: pagination.value.pageSize,
+                    total: 0,
+                    pages: 0,
+                    list: [],
+                    hasNextPage: false,
+                    hasPreviousPage: false
+                }
+
+                console.log('❌ 未找到水果:', searchKeyword.value)
+                showMessage(`未找到名为"${searchKeyword.value}"的水果`, 'warning')
+            }
+        } else {
+            // 没有搜索关键词，使用分页查询获取所有水果
+            console.log('📋 分页查询所有水果')
+            console.log('📍 请求接口: GET /api/fruit/getFruits')
+
+            const params: PageRequestDTO = {
+                pageNum: pagination.value.page,
+                pageSize: pagination.value.pageSize
+            }
+
+            console.log('📦 分页请求参数:', params)
+
+            const response = await getFruits(params)
+
+            console.log('📨 分页查询响应:', response)
+
+            if (response.code === 200 && response.data) {
+                fruits.value = response.data.list || []
+                pageInfo.value = response.data
+
+                console.log('✅ 分页查询结果:', {
+                    总数: response.data.total,
+                    当前页: response.data.pageNum,
+                    页面大小: response.data.pageSize,
+                    结果数量: fruits.value.length
+                })
+            } else {
+                console.error('❌ 分页查询失败:', response)
+                showMessage('获取水果列表失败: ' + (response.msg || '未知错误'), 'error')
+            }
         }
     } catch (error) {
-        console.error('加载水果列表失败:', error)
+        console.error('❌ 加载水果列表失败:', error)
         showMessage('加载水果列表失败', 'error')
     } finally {
         loading.value = false
@@ -337,11 +409,23 @@ const showMessage = (message: string, color: string = 'success') => {
 }
 
 const searchFruits = () => {
-    pagination.value.page = 1
+    const keyword = searchKeyword.value?.trim()
+    console.log('🔍 触发搜索 - 关键词:', keyword)
+
+    if (keyword) {
+        console.log('🎯 按名称精确搜索水果:', keyword)
+        // 重置分页（对于名称搜索不重要，但保持一致性）
+        pagination.value.page = 1
+    } else {
+        console.log('📋 显示所有水果列表')
+    }
+
+    // 执行搜索或列表加载
     loadFruits()
 }
 
 const clearSearch = () => {
+    console.log('🧹 清除搜索，显示所有水果')
     searchKeyword.value = ''
     pagination.value.page = 1
     loadFruits()
@@ -362,6 +446,12 @@ const handlePageSizeChange = (newSize: number) => {
     loadFruits()
 }
 
+// 返回方法
+const goBack = () => {
+    // 可以返回到用户中心或首页
+    router.push('/user')
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
     loadFruits()
@@ -379,6 +469,26 @@ onMounted(() => {
     background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
     color: white;
     border-radius: 24px 24px 0 0;
+    position: relative;
+}
+
+/* 返回按钮样式 */
+.header-navigation {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 1;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    transform: translateX(-2px);
 }
 
 .fruit-card {
@@ -443,6 +553,16 @@ onMounted(() => {
 @media (max-width: 600px) {
     .admin-container {
         padding-top: 60px;
+    }
+
+    .header-navigation {
+        top: 12px;
+        left: 12px;
+    }
+
+    .back-btn {
+        width: 40px;
+        height: 40px;
     }
 
     .fruit-card {
