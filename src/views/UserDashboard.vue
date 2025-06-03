@@ -54,61 +54,7 @@
                     </v-col>
                 </v-row>
 
-                <!-- 管理员专属统计卡片 -->
-                <v-row v-if="authStore.isAdmin" class="mb-6">
-                    <v-col cols="12">
-                        <v-card class="admin-stats-card fruit-card" elevation="4" rounded="xl">
-                            <v-card-title class="d-flex align-center">
-                                <v-icon color="deep-purple" class="mr-2">mdi-shield-crown</v-icon>
-                                <span class="text-deep-purple font-weight-bold">管理员面板</span>
-                                <v-spacer></v-spacer>
-                                <v-chip color="deep-purple" size="small" variant="flat">
-                                    管理员权限
-                                </v-chip>
-                            </v-card-title>
-                            <v-card-text class="pa-4">
-                                <v-row>
-                                    <v-col cols="6" sm="3">
-                                        <div class="admin-stat-item text-center">
-                                            <v-icon size="36" color="primary" class="mb-2">mdi-fruit-cherries</v-icon>
-                                            <div class="text-h6 font-weight-bold">23</div>
-                                            <div class="text-caption text-medium-emphasis">水果种类</div>
-                                        </div>
-                                    </v-col>
-                                    <v-col cols="6" sm="3">
-                                        <div class="admin-stat-item text-center">
-                                            <v-icon size="36" color="success" class="mb-2">mdi-account-group</v-icon>
-                                            <div class="text-h6 font-weight-bold">156</div>
-                                            <div class="text-caption text-medium-emphasis">注册用户</div>
-                                        </div>
-                                    </v-col>
-                                    <v-col cols="6" sm="3">
-                                        <div class="admin-stat-item text-center">
-                                            <v-icon size="36" color="warning" class="mb-2">mdi-package-variant</v-icon>
-                                            <div class="text-h6 font-weight-bold">89</div>
-                                            <div class="text-caption text-medium-emphasis">待处理订单</div>
-                                        </div>
-                                    </v-col>
-                                    <v-col cols="6" sm="3">
-                                        <div class="admin-stat-item text-center">
-                                            <v-icon size="36" color="info" class="mb-2">mdi-chart-line</v-icon>
-                                            <div class="text-h6 font-weight-bold">¥12.5k</div>
-                                            <div class="text-caption text-medium-emphasis">今日销售额</div>
-                                        </div>
-                                    </v-col>
-                                </v-row>
-                                <v-divider class="my-4"></v-divider>
-                                <div class="d-flex justify-center">
-                                    <v-btn color="deep-purple" variant="elevated" size="large" @click="goToAdminPanel"
-                                        class="admin-main-btn">
-                                        <v-icon start>mdi-fruit-cherries</v-icon>
-                                        进入水果管理系统
-                                    </v-btn>
-                                </div>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                </v-row>
+                
 
                 <!-- 统计卡片 -->
                 <v-row class="mb-6">
@@ -277,6 +223,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAvatarStore, type AvatarConfig } from '@/stores/avatar'
+import { getAdminStats, type AdminStats } from '@/utils/admin-api'
 import AppNavigation from '@/components/AppNavigation.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import AvatarSelector from '@/components/AvatarSelector.vue'
@@ -291,6 +238,15 @@ const showAvatarSelector = ref(false)
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
+
+// 管理员统计数据
+const adminStats = ref<AdminStats>({
+    fruitCount: 0,
+    userCount: 0,
+    pendingOrders: 0,
+    todaySales: 0
+})
+const statsLoading = ref(false)
 
 // 使用缓存的用户信息，避免重复请求
 const userInfo = computed(() => authStore.userProfile)
@@ -338,7 +294,7 @@ const handleAvatarSelect = (config: AvatarConfig) => {
 }
 
 // 快捷操作数据
-const quickActions = ref([  
+const quickActions = ref([
     { title: '个人资料', icon: 'mdi-account', color: 'primary', action: 'profile' },
     { title: '浏览商品', icon: 'mdi-storefront', color: 'success', action: 'browse' },
     { title: '我的订单', icon: 'mdi-package-variant', color: 'info', action: 'orders' },
@@ -514,6 +470,8 @@ const goToProducts = () => {
 }
 
 
+
+
 // 页面挂载时检查用户信息
 onMounted(async () => {
     console.log('🔍 UserDashboard 页面加载')
@@ -536,6 +494,8 @@ onMounted(async () => {
     if (!authStore.adminStatusChecked && userInfo.value?.email) {
         await authStore.checkAdmin(userInfo.value.email)
     }
+
+
 })
 </script>
 

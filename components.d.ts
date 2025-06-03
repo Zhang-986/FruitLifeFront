@@ -15,6 +15,7 @@ declare module 'vue' {
     ProfileWizard: typeof import('./src/components/ProfileWizard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TaskEditDialog: typeof import('./src/components/TaskEditDialog.vue')['default']
     UserAvatar: typeof import('./src/components/UserAvatar.vue')['default']
     UserInfoNotification: typeof import('./src/components/UserInfoNotification.vue')['default']
   }

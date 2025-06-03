@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { AuthManager } from '@/utils/auth-manager'
+// import { AuthManager } from '@/utils/auth-manager' // AuthManager might not be needed if using store directly
 import { createRetryableImport } from '@/utils/route-helper'
+import { useAuthStore } from '@/stores/auth'
 
 // 使用动态导入和重试机制
 const routes = [
@@ -219,6 +220,12 @@ const routes = [
     }),
     meta: { title: '优惠券 - 果润生活', requiresAuth: true }
   },
+  {
+    path: '/user/points',
+    name: 'PointsCenter',
+    component: () => import('@/views/PointsCenter.vue'),
+    meta: { requiresAuth: true }
+  },
   // 新增：水果管理页面（zzk路由）
   {
     path: '/zzk',
@@ -226,7 +233,29 @@ const routes = [
     component: () => import('@/views/ZzkAdmin.vue'),
     meta: {
       requiresAuth: true,
+      title: '管理员控制面板'
+    }
+  },
+  // 新增：水果管理页面
+  {
+    path: '/fruit-management', // 确保路径是这个
+    name: 'FruitManagement',   // 确保名称是这个
+    component: () => import('@/views/FruitManagement.vue'), // 确保组件路径正确
+    // 如果使用了 createRetryableImport，请确保其配置正确
+    // component: createRetryableImport('../views/FruitManagement.vue'),
+    meta: {
+      requiresAuth: true,
       title: '水果管理系统'
+    }
+  },
+  {
+    path: '/task-management',
+    name: 'TaskManagement',
+    component: () => import('@/views/TaskManagement.vue'),
+    meta: { 
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: '任务管理'
     }
   },
   {
@@ -253,33 +282,61 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
-  console.group(`🛣️ 路由守卫: ${from.path} -> ${to.path}`)
+router.beforeEach(async (to, from, next) => {
+  console.group(`🛣️ 路由守卫: ${from.path} -> ${to.path}`);
+  const authStore = useAuthStore();
   
-  const isLoggedIn = AuthManager.isLoggedIn()
-  console.log('🔍 当前登录状态:', isLoggedIn)
-  console.log('🎯 目标路由需要认证:', to.meta.requiresAuth)
+  // 确保认证状态和管理员权限已初始化检查完毕
+  await authStore.initializeAuth();
+
+  const isLoggedIn = authStore.isLoggedIn; // Use direct store access
+  const isAdmin = authStore.isAdmin;
+
+  console.log('🔍 当前登录状态:', isLoggedIn);
+  console.log('👑 当前管理员状态:', isAdmin, '(已检查:', authStore.adminStatusChecked, ')');
+  console.log('🎯 目标路由元信息:', to.meta);
   
   // 检查token是否即将过期
-  if (isLoggedIn && AuthManager.isTokenExpiringSoon()) {
+  if (isLoggedIn && authStore.isTokenExpiringSoon()) { // Use authStore directly
     console.warn('⚠️ Token即将过期，建议重新登录')
   }
   
-  // 检查路由是否需要认证
-  if (to.meta.requiresAuth && !isLoggedIn) {
-    // 需要登录但未登录，跳转到登录页
-    console.log('🔒 需要登录访问，重定向到登录页')
-    console.groupEnd()
-    next({ name: 'login' })
-    return
-  }
-  
-  // 如果已登录且访问登录/注册页，重定向到用户主界面
+  // Handle redirection for logged-in users trying to access login/register
   if (isLoggedIn && (to.name === 'login' || to.name === 'register')) {
-    console.log('✅ 已登录用户，重定向到用户主界面')
-    console.groupEnd()
-    next({ name: 'user-dashboard' })
-    return
+    console.log('✅ 已登录用户访问登录/注册页，重定向到用户主界面');
+    console.groupEnd();
+    next({ name: 'user-dashboard' });
+    return;
+  }
+
+  const requiresAuth = to.meta.requiresAuth as boolean | undefined;
+  const requiresAdmin = to.meta.requiresAdmin as boolean | undefined;
+
+  // Handle routes requiring admin privileges
+  if (requiresAdmin) {
+    if (!isLoggedIn) {
+      console.log('🔒 管理员路由: 用户未登录，重定向到登录页');
+      console.groupEnd();
+      next({ name: 'login', query: { redirect: to.fullPath } });
+      return;
+    }
+    if (!isAdmin) {
+      console.log('🚫 管理员路由: 用户非管理员，重定向到首页');
+      console.groupEnd();
+      next({ name: 'home' }); // Or a dedicated 'Unauthorized' page
+      return;
+    }
+    console.log('🔑 管理员路由: 权限通过');
+  }
+  // Handle routes requiring authentication (but not necessarily admin)
+  else if (requiresAuth) {
+    if (!isLoggedIn) {
+      console.log('🔒 普通认证路由: 用户未登录，重定向到登录页');
+      console.groupEnd();
+      next({ name: 'login', query: { redirect: to.fullPath } });
+      return;
+    }
+    console.log('🔑 普通认证路由: 权限通过');
   }
   
   // 设置页面标题

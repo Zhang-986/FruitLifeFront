@@ -1,5 +1,5 @@
 <template>
-    <v-dialog v-model="showDialog" max-width="600" persistent @click:outside="handleCancel">
+    <v-dialog v-model="showDialog" max-width="600" persistent @click:outside="handleCancelAttempt">
         <v-card class="profile-edit-card fruit-card" elevation="12" rounded="xl">
             <!-- 弹窗头部 -->
             <div class="profile-edit-header fruit-gradient">
@@ -7,7 +7,7 @@
                     <v-icon color="white" class="mr-3" size="large">mdi-account-edit</v-icon>
                     <span class="text-h5 font-weight-bold">编辑个人资料</span>
                     <v-spacer></v-spacer>
-                    <v-btn icon variant="text" @click="handleCancel" class="close-btn">
+                    <v-btn icon variant="text" @click="handleCancelAttempt" class="close-btn">
                         <v-icon color="white">mdi-close</v-icon>
                     </v-btn>
                 </v-card-title>
@@ -120,7 +120,7 @@
             <!-- 操作按钮 -->
             <v-divider></v-divider>
             <v-card-actions class="pa-4">
-                <v-btn variant="outlined" color="grey" @click="handleCancel" class="action-btn">
+                <v-btn variant="outlined" color="grey" @click="handleCancelAttempt" class="action-btn">
                     <v-icon start>mdi-close</v-icon>
                     取消
                 </v-btn>
@@ -129,6 +129,32 @@
                     :disabled="!formValid || !hasChanges" class="action-btn fruit-gradient-btn">
                     <v-icon start color="white">mdi-check</v-icon>
                     <span class="text-white">保存更改</span>
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+
+    <!-- 取消确认对话框 -->
+    <v-dialog v-model="showCancelConfirmDialog" persistent max-width="450px" rounded="xl">
+        <v-card class="cancel-confirm-card" rounded="xl">
+            <v-card-title class="text-h5 bg-warning d-flex align-center">
+                <v-icon start color="white">mdi-alert-outline</v-icon>
+                <span class="text-white font-weight-bold">确认取消</span>
+            </v-card-title>
+            <v-card-text class="pt-6 pb-6 text-body-1">
+                您有未保存的更改。确定要取消编辑吗？
+                <br />
+                所有未保存的更改都将丢失。
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions class="pa-4">
+                <v-spacer></v-spacer>
+                <v-btn color="grey-darken-1" variant="text" @click="doNotCancelEdit" class="action-btn">
+                    继续编辑
+                </v-btn>
+                <v-btn color="warning" variant="elevated" @click="confirmCancelEdit" class="action-btn">
+                    <v-icon start>mdi-cancel</v-icon>
+                    确认取消
                 </v-btn>
             </v-card-actions>
         </v-card>
@@ -181,6 +207,7 @@ const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
 const isGeneratingNickname = ref(false)
+const showCancelConfirmDialog = ref(false) // 新增：控制取消确认对话框
 
 // 表单数据
 const formData = ref<CompleteProfileData>({
@@ -240,6 +267,7 @@ const calculatedBMI = computed(() => {
 })
 
 const hasChanges = computed(() => {
+    if (!originalData.value) return false; // 如果原始数据未设置，则认为无变化
     const current = JSON.stringify(formData.value)
     const original = JSON.stringify(originalData.value)
     return current !== original
@@ -311,16 +339,23 @@ const showMessage = (message: string, color: string = 'success') => {
     snackbar.value = true
 }
 
-const handleCancel = () => {
+const handleCancelAttempt = () => {
     if (hasChanges.value) {
-        if (confirm('您有未保存的更改，确定要取消吗？')) {
-            showDialog.value = false
-            // 恢复原始数据
-            initializeForm()
-        }
+        showCancelConfirmDialog.value = true; // 显示自定义确认对话框
     } else {
-        showDialog.value = false
+        showDialog.value = false // 无更改，直接关闭编辑对话框
     }
+}
+
+const confirmCancelEdit = () => {
+    showCancelConfirmDialog.value = false;
+    showDialog.value = false;
+    // 恢复原始数据或重置表单
+    initializeForm(); // 确保表单恢复到初始状态
+}
+
+const doNotCancelEdit = () => {
+    showCancelConfirmDialog.value = false; //仅关闭取消确认对话框
 }
 
 const handleSave = async () => {
@@ -385,6 +420,9 @@ const handleSave = async () => {
 watch(showDialog, (newValue) => {
     if (newValue) {
         initializeForm()
+    } else {
+        // 如果编辑对话框关闭了，确保取消确认对话框也关闭
+        showCancelConfirmDialog.value = false;
     }
 })
 </script>
@@ -454,6 +492,17 @@ watch(showDialog, (newValue) => {
 }
 
 .action-btn {
+    min-width: 100px;
+    height: 44px !important;
+    font-weight: 600 !important;
+}
+
+.cancel-confirm-card .v-card-title {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.cancel-confirm-card .action-btn {
     min-width: 100px;
     height: 44px !important;
     font-weight: 600 !important;

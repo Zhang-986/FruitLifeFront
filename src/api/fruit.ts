@@ -189,3 +189,19 @@ export const getFruitByName = async (name: string): Promise<ApiResponse<Fruit>> 
     params: { name }
   })
 }
+
+/**
+ * 获取所有水果列表 (不分页)
+ */
+export const getAllFruit = async (): Promise<ApiResponse<Fruit[]>> => {
+  console.log('🔍 发送获取所有水果请求')
+  
+  try {
+    const response = await http.get<ApiResponse<Fruit[]>>('/fruit/getAllFruit')
+    console.log('✅ 获取所有水果成功:', response)
+    return response
+  } catch (error) {
+    console.error('❌ 获取所有水果失败:', error)
+    throw error
+  }
+}

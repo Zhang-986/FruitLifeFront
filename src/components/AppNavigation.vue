@@ -194,19 +194,8 @@
                     </v-list-item>
                 </v-list-group>
 
-                <!-- 商品分类 -->
-                <v-list-group value="categories">
-                    <template v-slot:activator="{ props }">
-                        <v-list-item v-bind="props" prepend-icon="mdi-fruit-grapes">
-                            <v-list-item-title>商品分类</v-list-item-title>
-                        </v-list-item>
-                    </template>
 
-                    <v-list-item v-for="category in categories" :key="category.name"
-                        @click="handleCategoryClick(category)" :prepend-icon="category.icon" class="menu-sub-item">
-                        <v-list-item-title>{{ category.name }}</v-list-item-title>
-                    </v-list-item>
-                </v-list-group>
+
 
                 <v-divider class="my-2"></v-divider>
 
@@ -274,19 +263,15 @@ const userMenu = ref(false)
 // 主要菜单项
 const mainMenuItems = ref([
     { title: '首页', icon: 'mdi-home', to: '/' },
-    { title: '水果列表', icon: 'mdi-fruit-cherries', to: '/products' }, // 更新图标
-    { title: '特价促销', icon: 'mdi-tag-heart', to: '/promotions' },
+    { title: '水果大全', icon: 'mdi-fruit-cherries', to: '/products' },
+    { title: '积分界面', icon: 'mdi-star', to:'/user/points' }, // 更新图标
     { title: '关于我们', icon: 'mdi-information', to: '/about' }
 ])
 
 // 用户菜单项
 const userMenuItems = ref([
     { title: '用户中心', icon: 'mdi-view-dashboard', to: '/user' },
-    { title: '我的订单', icon: 'mdi-package-variant', to: '/user/orders' },
-    { title: '购物车', icon: 'mdi-cart', to: '/user/cart' },
-    { title: '我的收藏', icon: 'mdi-heart', to: '/user/favorites' },
     { title: '个人资料', icon: 'mdi-account', to: '/user/profile' }, // 更新链接
-    { title: '完善资料', icon: 'mdi-account-edit', to: '/user/profile-wizard' }
 ])
 
 // 其他菜单项
@@ -294,16 +279,6 @@ const otherMenuItems = ref([
     { title: '客服中心', icon: 'mdi-help-circle', to: '/support' },
     { title: '意见反馈', icon: 'mdi-message-alert', to: '/feedback' },
     { title: '设置', icon: 'mdi-cog', to: '/settings' }
-])
-
-// 商品分类
-const categories = ref([
-    { name: '新鲜水果', icon: 'mdi-apple', color: 'red' },
-    { name: '热带水果', icon: 'mdi-fruit-pineapple', color: 'orange' },
-    { name: '浆果类', icon: 'mdi-fruit-grapes', color: 'purple' },
-    { name: '柑橘类', icon: 'mdi-fruit-citrus', color: 'orange' },
-    { name: '核果类', icon: 'mdi-fruit-cherries', color: 'pink' },
-    { name: '进口水果', icon: 'mdi-airplane', color: 'blue' }
 ])
 
 // 计算属性

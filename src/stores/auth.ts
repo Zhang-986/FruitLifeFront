@@ -3,6 +3,9 @@ import { ref, computed } from 'vue'
 import { getUserInfo as fetchUserInfo, type UserInfoVo } from '@/api/profile'
 import { checkAdminStatus } from '@/api/admin'
 
+// Promise to ensure initialization logic runs once and can be awaited
+let authInitializationPromise: Promise<void> | null = null;
+
 export const useAuthStore = defineStore('auth', () => {
   // 状态
   const token = ref<string | null>(null)
@@ -15,7 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userProfileLoading = ref(false)
   
   // 新增：管理员状态
-  const isAdmin = ref(false)
+  const isAdminStatus = ref(false)
   const adminStatusChecked = ref(false)
   
   // 计算属性
@@ -31,6 +34,11 @@ export const useAuthStore = defineStore('auth', () => {
         return emailPrefix.length > 10 ? emailPrefix.substring(0, 10) + '...' : emailPrefix
     }
     return '用户'
+  })
+
+  // 管理员权限检查 - 统一的计算属性
+  const isAdmin = computed(() => {
+    return isAdminStatus.value
   })
   
   // 新增：用户完善状态计算属性
@@ -72,45 +80,78 @@ export const useAuthStore = defineStore('auth', () => {
   })
   
   // 初始化状态（从localStorage恢复）
-  const initializeAuth = () => {
-    const savedToken = localStorage.getItem('fruit_life_token')
-    const savedUserInfo = localStorage.getItem('fruit_life_user')
-    
-    if (savedToken) {
-      token.value = savedToken
-      console.log('✅ 恢复token:', savedToken.substring(0, 20) + '...')
+  const initializeAuth = async () => {
+    if (authInitializationPromise) {
+      return authInitializationPromise;
     }
-    
-    if (savedUserInfo) {
-      try {
-        userInfo.value = JSON.parse(savedUserInfo)
-        console.log('✅ 恢复用户信息:', userInfo.value?.email)
-      } catch (error) {
-        console.warn('⚠️ 用户信息解析失败', error)
-        userInfo.value = null
+
+    authInitializationPromise = (async () => {
+      console.log('🚀 Auth Store: Starting initialization...');
+      const savedToken = localStorage.getItem('fruit_life_token')
+      const savedUserInfo = localStorage.getItem('fruit_life_user')
+      
+      if (savedToken) {
+        token.value = savedToken
+        console.log('✅ Auth Store: Token restored from localStorage.', savedToken.substring(0, 20) + '...')
       }
-    }
+      
+      if (savedUserInfo) {
+        try {
+          userInfo.value = JSON.parse(savedUserInfo)
+          console.log('✅ Auth Store: UserInfo restored from localStorage:', userInfo.value?.email)
+        } catch (error) {
+          console.warn('⚠️ Auth Store: UserInfo parsing failed from localStorage.', error)
+          userInfo.value = null
+        }
+      }
+      
+      console.log('🔍 Auth Store: Initial login status from localStorage:', isLoggedIn.value);
+
+      // Crucial part: check admin status if logged in
+      if (isLoggedIn.value && userInfo.value?.email) {
+        console.log('Auth Store: User is logged in. Checking admin status for', userInfo.value.email);
+        await checkAdmin(userInfo.value.email); // This will set adminStatusChecked
+        console.log(`Auth Store: Admin status checked. IsAdmin: ${isAdminStatus.value}, Checked: ${adminStatusChecked.value}`);
+      } else {
+        // If not logged in, or no email, admin status is definitively false and checked.
+        isAdminStatus.value = false;
+        adminStatusChecked.value = true; // Mark as checked
+        console.log('Auth Store: User not logged in or no email. Admin status set to false and considered checked.');
+      }
+      console.log('🏁 Auth Store: Initialization complete.');
+    })();
     
-    console.log('🔍 初始化后登录状态:', isLoggedIn.value)
+    return authInitializationPromise;
   }
   
   // 检查管理员权限
   const checkAdmin = async (email: string) => {
     if (adminStatusChecked.value) {
-      return isAdmin.value
+      console.log(`🛡️ Auth Store: Admin status already checked for ${email}. IsAdmin: ${isAdminStatus.value}. Returning cached status.`);
+      return isAdminStatus.value
     }
 
+    if (!email) {
+        console.warn('🛡️ Auth Store: checkAdmin called with no email. Setting isAdmin to false.');
+        isAdminStatus.value = false;
+        adminStatusChecked.value = true;
+        return false;
+    }
+
+    console.log(`🛡️ Auth Store: Checking admin status via API for ${email}...`);
     try {
       const response = await checkAdminStatus(email)
       const isAdminUser = response.code === 200 && response.data === "675314"
-      isAdmin.value = isAdminUser
-      adminStatusChecked.value = true
-      return isAdminUser
+      isAdminStatus.value = isAdminUser
+      console.log(`🛡️ Auth Store: Admin status API response for ${email}. IsAdmin: ${isAdminUser}`);
     } catch (error) {
-      isAdmin.value = false
+      console.error(`❌ Auth Store: Error checking admin status for ${email}:`, error);
+      isAdminStatus.value = false
+    } finally {
       adminStatusChecked.value = true
-      return false
+      console.log(`🛡️ Auth Store: Admin status check complete for ${email}. IsAdmin: ${isAdminStatus.value}, Checked: ${adminStatusChecked.value}`);
     }
+    return isAdminStatus.value
   }
 
   // 保存token和用户信息
@@ -127,17 +168,29 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('fruit_life_user', JSON.stringify(newUserInfo))
     }
     
-    // 登录成功后预加载用户详细信息
+    // Reset admin status check for the new/updated user
+    adminStatusChecked.value = false;
+    isAdminStatus.value = false; // Assume not admin until checked
+
+    // 登录成功后预加载用户详细信息并检查管理员状态
     try {
-      await loadUserProfile(true)
+      await loadUserProfile(true) // Force refresh profile
       
-      if (userEmail) {
-        await checkAdmin(userEmail)
-      } else if (userInfo.value?.email) {
-        await checkAdmin(userInfo.value.email)
+      const emailToCheck = userEmail || userInfo.value?.email;
+      if (emailToCheck) {
+        await checkAdmin(emailToCheck)
+      } else {
+        // If no email, admin status is false and checked
+        isAdminStatus.value = false;
+        adminStatusChecked.value = true;
       }
     } catch (error) {
-      // 静默处理错误
+      console.error('Auth Store: Error during post-saveToken operations (profile/admin check):', error);
+      // Ensure adminStatusChecked is true even on error if no email was available to check
+      if (! (userEmail || userInfo.value?.email) ) {
+        isAdminStatus.value = false;
+        adminStatusChecked.value = true;
+      }
     }
   }
 
@@ -200,7 +253,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 新增：清除管理员状态
   const clearAdminStatus = () => {
-    isAdmin.value = false
+    isAdminStatus.value = false
     adminStatusChecked.value = false
   }
 
@@ -212,8 +265,9 @@ export const useAuthStore = defineStore('auth', () => {
     // 新增：清除用户信息缓存
     clearUserProfile()
     
-    // 新增：清除管理员状态
-    clearAdminStatus()
+    // 清除管理员状态
+    isAdminStatus.value = false;
+    adminStatusChecked.value = true; // After logout, status is known (false) and checked
     
     // 同时清除localStorage
     localStorage.removeItem('fruit_life_token')
@@ -221,6 +275,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('rememberPassword')
     localStorage.removeItem('savedEmail')
     localStorage.removeItem('savedPassword')
+
+    authInitializationPromise = null; // Reset initialization promise for potential re-login
+    console.log('🔒 Auth Store: User logged out. Admin status reset and checked. Initialization promise reset.');
   }
   
   // 获取token
@@ -243,7 +300,7 @@ export const useAuthStore = defineStore('auth', () => {
     
     return hoursSinceLogin > 20
   }
-  
+
   return {
     // 状态
     token,
@@ -254,6 +311,7 @@ export const useAuthStore = defineStore('auth', () => {
     userProfile,
     userProfileLoaded,
     userCompletionStatus,
+    isAdmin,
     // 方法
     initializeAuth,
     saveToken,
@@ -265,8 +323,7 @@ export const useAuthStore = defineStore('auth', () => {
     updateUserProfile,
     clearUserProfile,
     // 新增：管理员相关
-    isAdmin,
-    adminStatusChecked,
+    adminStatusChecked, // Expose for debugging or specific checks if needed
     checkAdmin,
     clearAdminStatus
   }

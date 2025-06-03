@@ -144,11 +144,7 @@
                                             查看详情
                                         </v-btn>
                                         <v-spacer></v-spacer>
-                                        <v-btn color="success" variant="text" size="small"
-                                            @click.stop="addToCart(fruit)">
-                                            <v-icon start size="small">mdi-cart-plus</v-icon>
-                                            加入购物车
-                                        </v-btn>
+                                        
                                     </v-card-actions>
                                 </v-card>
                             </v-col>
